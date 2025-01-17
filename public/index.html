@@ -2,15 +2,45 @@
 <html lang="en">
 
 <head>
+    <!-- Meta -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script type="module" src="/scripts/graph.js"></script>
     <title>Private Maps</title>
     <description>The privacy of OpenStreetMap with the convenience of Google Maps</description>
+
+    <!-- Scripts -->
+    <script type="module" src="scripts/graph.js"></script>
+    <script type="module" src="scripts/point.js"></script>
+    <script type="module" src="scripts/edge.js"></script>
 </head>
 
 <body>
+    <h1>Private Maps</h1>
+    <canvas id="mapCanvas"></canvas>
+    <script type="module">
+        import { Point } from './scripts/point.js';
+        import { Edge } from './scripts/edge.js';
+        import { Graph } from './scripts/graph.js';
 
+        const mapCanvas = document.getElementById("mapCanvas");
+        mapCanvas.width = window.innerWidth;
+        mapCanvas.height = window.innerHeight;
+
+        const ctx = mapCanvas.getContext("2d");
+
+        const p1 = new Point(100, 100);
+        const p2 = new Point(100, 500);
+        const p3 = new Point(300, 450);
+        const p4 = new Point(150, 320);
+
+        const s1 = new Edge(p1, p2);
+        const s2 = new Edge(p1, p3);
+        const s3 = new Edge(p1, p4);
+        const s4 = new Edge(p2, p3);
+
+        const graph = new Graph([p1, p2, p3, p4], [s1, s2, s3, s4]);
+        graph.draw(ctx);
+    </script>
 </body>
 
 </html>

@@ -2,16 +2,10 @@
 <html lang="en">
 
 <head>
-    <!-- Meta -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Private Maps</title>
     <description>The privacy of OpenStreetMap with the convenience of Google Maps</description>
-
-    <!-- Scripts -->
-    <script type="module" src="scripts/graph.js"></script>
-    <script type="module" src="scripts/point.js"></script>
-    <script type="module" src="scripts/edge.js"></script>
 </head>
 
 <body>
@@ -33,12 +27,12 @@
         const p3 = new Point(300, 450);
         const p4 = new Point(150, 320);
 
-        const s1 = new Edge(p1, p2);
-        const s2 = new Edge(p1, p3);
-        const s3 = new Edge(p1, p4);
-        const s4 = new Edge(p2, p3);
+        const e1 = new Edge(p1, p2);
+        const e2 = new Edge(p1, p3);
+        const e3 = new Edge(p1, p4);
+        const e4 = new Edge(p2, p3);
 
-        const graph = new Graph([p1, p2, p3, p4], [s1, s2, s3, s4]);
+        const graph = new Graph([p1, p2, p3, p4], [e1, e2, e3, e4]);
         graph.draw(ctx);
     </script>
 </body>

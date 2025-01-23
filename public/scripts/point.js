@@ -1,12 +1,18 @@
 export class Point {
-    constructor(x, y) {
-        this.x = x;
-        this.y = y;
+    constructor(id, lat, lon) {
+        this.id = id;
+        this.lat = lat;
+        this.lon = lon;
     }
 
-    draw(ctx) {
+    toCanvasCoordinates(viewport) {
+        return viewport.geoToCanvas(this.lat, this.lon);
+    }
+
+    draw(ctx, viewport) {
+        const { x, y } = this.toCanvasCoordinates(viewport);
         ctx.beginPath();
-        ctx.arc(this.x, this.y, 5, 0, 2 * Math.PI);
+        ctx.arc(x, y, 5, 0, 2 * Math.PI);
         ctx.fillStyle = 'black';
         ctx.fill();
     }

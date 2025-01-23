@@ -9,8 +9,8 @@ export class Graph {
     addEdge(edge) {
         this.edges.push(edge);
     }
-    draw(ctx) {
-        this.edges.forEach(edge => edge.draw(ctx));
-        this.points.forEach(point => point.draw(ctx));
+    draw(ctx, viewport) {
+        this.edges.forEach(edge => edge.draw(ctx, viewport));
+        this.points.forEach(point => point.draw(ctx, viewport));
     }
 }

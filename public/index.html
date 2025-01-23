@@ -1,40 +1,113 @@
 <!DOCTYPE html>
 <html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Private Maps</title>
+		<description>The privacy of OpenStreetMap with the convenience of Google Maps</description>
+		<link rel="stylesheet" href="styles/styles.css" />
+	</head>
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Private Maps</title>
-    <description>The privacy of OpenStreetMap with the convenience of Google Maps</description>
-</head>
+	<body>
+		<h1>Private Maps</h1>
+		<canvas id="mapCanvas"></canvas>
+		<script type="module">
+			import { Point } from "./scripts/point.js";
+			import { Edge } from "./scripts/edge.js";
+			import { Graph } from "./scripts/graph.js";
+			import { OsmLoader } from "./scripts/osmLoader.js";
+			import { Viewport } from "./scripts/viewport.js";
 
-<body>
-    <h1>Private Maps</h1>
-    <canvas id="mapCanvas"></canvas>
-    <script type="module">
-        import { Point } from './scripts/point.js';
-        import { Edge } from './scripts/edge.js';
-        import { Graph } from './scripts/graph.js';
+			const mapCanvas = document.getElementById("mapCanvas");
+			mapCanvas.width = window.innerWidth;
+			mapCanvas.height = window.innerHeight;
 
-        const mapCanvas = document.getElementById("mapCanvas");
-        mapCanvas.width = window.innerWidth;
-        mapCanvas.height = window.innerHeight;
+			const ctx = mapCanvas.getContext("2d");
+			const viewport = new Viewport(mapCanvas);
 
-        const ctx = mapCanvas.getContext("2d");
+			const loader = new OsmLoader();
+			const graph = await loader.load();
 
-        const p1 = new Point(100, 100);
-        const p2 = new Point(100, 500);
-        const p3 = new Point(300, 450);
-        const p4 = new Point(150, 320);
+			// Compute bounding box
+			let latMin = Infinity,
+				latMax = -Infinity;
+			let lonMin = Infinity,
+				lonMax = -Infinity;
+			graph.points.forEach((p) => {
+				if (p.lat < latMin) latMin = p.lat;
+				if (p.lat > latMax) latMax = p.lat;
+				if (p.lon < lonMin) lonMin = p.lon;
+				if (p.lon > lonMax) lonMax = p.lon;
+			});
+			viewport.autoFit(latMin, latMax, lonMin, lonMax);
 
-        const e1 = new Edge(p1, p2);
-        const e2 = new Edge(p1, p3);
-        const e3 = new Edge(p1, p4);
-        const e4 = new Edge(p2, p3);
+			function render() {
+				ctx.clearRect(0, 0, mapCanvas.width, mapCanvas.height);
+				graph.draw(ctx, viewport);
+			}
+			render();
 
-        const graph = new Graph([p1, p2, p3, p4], [e1, e2, e3, e4]);
-        graph.draw(ctx);
-    </script>
-</body>
+			// Mouse events for panning
+			let isDragging = false;
+			let lastX = 0,
+				lastY = 0;
 
+			mapCanvas.addEventListener("mousedown", (e) => {
+				isDragging = true;
+				lastX = e.clientX;
+				lastY = e.clientY;
+			});
+
+			mapCanvas.addEventListener("mousemove", (e) => {
+				if (!isDragging) return;
+				const dx = e.clientX - lastX;
+				const dy = e.clientY - lastY;
+				viewport.pan(dx, dy);
+				lastX = e.clientX;
+				lastY = e.clientY;
+				render();
+			});
+
+			mapCanvas.addEventListener("mouseup", () => (isDragging = false));
+
+			// Wheel event for zoom
+			mapCanvas.addEventListener(
+				"wheel",
+				(e) => {
+					e.preventDefault();
+					const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
+					viewport.zoom(zoomFactor);
+					render();
+				},
+				{ passive: false }
+			);
+
+			// Keyboard events for panning and zoom
+			document.addEventListener("keydown", (e) => {
+				switch (e.key) {
+					case "ArrowUp":
+						viewport.pan(0, 10);
+						break;
+					case "ArrowDown":
+						viewport.pan(0, -10);
+						break;
+					case "ArrowLeft":
+						viewport.pan(10, 0);
+						break;
+					case "ArrowRight":
+						viewport.pan(-10, 0);
+						break;
+					case "+":
+						viewport.zoom(1.1);
+						break;
+					case "-":
+						viewport.zoom(0.9);
+						break;
+					default:
+						return;
+				}
+				render();
+			});
+		</script>
+	</body>
 </html>

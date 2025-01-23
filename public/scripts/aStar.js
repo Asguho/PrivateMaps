@@ -56,7 +56,7 @@ export class aStar{
       }
       
 
-    run(start, end){
+    run(start, end){ //ikke færdig, skal også lige kigges i gennem lige 
         const start = new Node("Start");
         const goal = new Node("Goal");
 

@@ -3,10 +3,12 @@ export class Edge {
         this.point1 = point1;
         this.point2 = point2;
     }
-    draw(ctx) {
+    draw(ctx, viewport) {
+        const { x: x1, y: y1 } = this.point1.toCanvasCoordinates(viewport);
+        const { x: x2, y: y2 } = this.point2.toCanvasCoordinates(viewport);
         ctx.beginPath();
-        ctx.moveTo(this.point1.x, this.point1.y);
-        ctx.lineTo(this.point2.x, this.point2.y);
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
         ctx.strokeStyle = 'black';
         ctx.lineWidth = 2;
         ctx.stroke();

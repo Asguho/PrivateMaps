@@ -19,6 +19,7 @@
 			import { OsmLoader } from "./scripts/osmLoader.js";
 			import { Viewport } from "./scripts/viewport.js";
 			import { aStar } from "./scripts/aStar.js";
+			import { path } from "./scripts/path.js";
 
 			const mapCanvas = document.getElementById("mapCanvas");
 			mapCanvas.width = window.innerWidth;
@@ -26,6 +27,7 @@
 
 			const ctx = mapCanvas.getContext("2d");
 			const viewport = new Viewport(mapCanvas);
+			var fpath = null;
 
 			const loader = new OsmLoader();
 			const graph = await loader.load();
@@ -46,6 +48,8 @@
 			function render() {
 				ctx.clearRect(0, 0, mapCanvas.width, mapCanvas.height);
 				graph.draw(ctx, viewport);
+				if (fpath){ fpath.draw(ctx, viewport); }
+				
 			}
 			render();
 
@@ -115,22 +119,11 @@
 				//get random points as start and end
 				const start = graph.points[Math.floor(Math.random() * graph.points.length)];
 				const end = graph.points[Math.floor(Math.random() * graph.points.length)];
-				var astar = new aStar(graph, start, end);
-				var fpath = astar.run();
+				const astar = new aStar(graph, start, end);
 				console.log("Running A* from", start, "to", end);
-				if (fpath && fpath.length > 0) {
-					console.log("Path found: ", fpath);
-					ctx.strokeStyle = "red";
-					ctx.lineWidth = 3;
-					ctx.beginPath();
-					const startCoords = fpath[0].point.toCanvasCoordinates(viewport);
-					ctx.moveTo(startCoords.x, startCoords.y);
-					for (let i = 1; i < fpath.length; i++) {
-						const coords = fpath[i].point.toCanvasCoordinates(viewport);
-						ctx.lineTo(coords.x, coords.y);
-					}
-					ctx.stroke();
-				}
+				 fpath = new path(astar.run());
+				console.log("Path found", fpath);
+				render();
 			});
 		</script>
 	</body>

@@ -4,14 +4,15 @@ export class path {
         this.colour = colour;
     }
     draw(ctx, viewport) {
-        if (this.points.length > 0) {
-            ctx.strokeStyle = "red";
+        if (this.points && this.points.length > 0) {
+            ctx.strokeStyle = this.colour;
             ctx.lineWidth = 3;
             ctx.beginPath();
-            const startCoords = this.points[0].point.toCanvasCoordinates(viewport);
+            console.log("points: " + this.points);
+            const startCoords = this.points[0].toCanvasCoordinates(viewport);
             ctx.moveTo(startCoords.x, startCoords.y);
             for (let i = 1; i < this.points.length; i++) {
-                const coords = this.points[i].point.toCanvasCoordinates(viewport);
+                const coords = this.points[i].toCanvasCoordinates(viewport);
                 ctx.lineTo(coords.x, coords.y);
             }
             ctx.stroke();

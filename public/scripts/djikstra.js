@@ -1,9 +1,28 @@
+import { MinHeap } from './minheap.js';
+
 export class DjikstraNode {
     constructor(state, parent, g) {
         this.state = state;
         this.parent = parent;
-        this.g = g;
+        this.g = g; // The distance from the start node
     }
+}
+
+function haversineDistance(lat1, lon1, lat2, lon2) {
+    const R = 6371e3; // Earth radius in meters
+    const toRadians = (degrees) => degrees * Math.PI / 180;
+
+    const a1 = toRadians(lat1);
+    const a2 = toRadians(lat2);
+    const b1 = toRadians(lat2 - lat1);
+    const b2 = toRadians(lon2 - lon1);
+
+    const a = Math.sin(b2 / 2) * Math.sin(b2 / 2) +
+              Math.cos(a1) * Math.cos(a2) *
+              Math.sin(b2 / 2) * Math.sin(b2 / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+    return R * c; // Distance in meters
 }
 
 export class Djikstra {
@@ -11,88 +30,123 @@ export class Djikstra {
         this.graph = graph;
         this.start = start;
         this.end = end;
-        this.openList = [];
+        this.openList = new MinHeap((a, b) => a.g - b.g); // MinHeap for efficiency
+        this.openSet = new Map(); // Map to track elements in the open list (for fast look-up)
         this.closedList = new Set();
         this.path = [];
+        this.distances = new Map();
+
+        // Prepare distance matrix
+        this.graph.edges.forEach(({ point1, point2, distance }) => {
+            if (!this.distances.has(point1.id)) this.distances.set(point1.id, new Map());
+            if (!this.distances.has(point2.id)) this.distances.set(point2.id, new Map());
+            const calculatedDistance = distance || haversineDistance(point1.lat, point1.lon, point2.lat, point2.lon);
+            this.distances.get(point1.id).set(point2.id, calculatedDistance);
+            this.distances.get(point2.id).set(point1.id, calculatedDistance);
+        });
     }
 
     addOpen(node) {
-        this.openList.push(node);
-        this.openList.sort((a, b) => a.g - b.g); // Sort by smallest g value
+        this.openList.insert(node);
+        this.openSet.set(node.state.id, node); // Track node in Map for quick lookup
     }
 
     addClosed(node) {
-        this.closedList.add(node);
+        this.closedList.add(node.state.id);
     }
 
-    openListEmpty() {
-        return this.openList.length === 0;
+    isInClosed(state) {
+        return this.closedList.has(state.id);
     }
 
-    popOpen() {
-        return this.openList.shift();
-    }
-
-    isInClosed(node) {
-        return this.closedList.has(node);
+    isInOpen(state) {
+        return this.openSet.has(state.id);
     }
 
     reconstructPath(node) {
         const path = [];
         while (node) {
-            path.unshift(node.state); // Add node state to the path
-            node = node.parent; // Move to the parent node
+            path.push(node.state);
+            node = node.parent;
         }
-        return path;
+        return path.reverse();
+    }
+
+    getNeighbors(point) {
+        return this.graph.edges
+            .filter(({ point1, point2 }) => point1.id === point.id || point2.id === point.id)
+            .map(({ point1, point2 }) => (point1.id === point.id ? point2 : point1));
+    }
+
+    getDistance(point1, point2) {
+        return this.distances.get(point1.id)?.get(point2.id) ?? Infinity;
     }
 
     run() {
-        let startNode = new DjikstraNode(this.start, null, 0);
+        const startNode = new DjikstraNode(this.start, null, 0);
         this.addOpen(startNode);
 
-        while (!this.openListEmpty()) {
-            let currentNode = this.popOpen();
+        while (!this.openList.isEmpty()) {
+            const currentNode = this.openList.pop();
 
-            if (currentNode.state === this.end) {
+            // If we reach the destination, reconstruct the path
+            if (currentNode.state.id === this.end.id) {
                 this.path = this.reconstructPath(currentNode);
-                return this.createGraphWithOptimalPath();
+                console.log("Path found:", this.path);
+                return this.path; // Return the path as an array of points
             }
 
+            // Mark current node as visited
             this.addClosed(currentNode);
 
-            let neighbors = this.getNeighbors(currentNode.state);
-            for (let neighbor of neighbors) {
+            const neighbors = this.getNeighbors(currentNode.state);
+            for (const neighbor of neighbors) {
                 if (this.isInClosed(neighbor)) continue;
 
-                let g = currentNode.g + this.getDistance(currentNode.state, neighbor);
+                const g = currentNode.g + this.getDistance(currentNode.state, neighbor);
                 let neighborNode = new DjikstraNode(neighbor, currentNode, g);
 
-                this.addOpen(neighborNode);
+                // If the neighbor is already in the open list, check if the new g is better
+                if (this.isInOpen(neighborNode.state)) {
+                    // Check if this new path to the neighbor is better (lower g value)
+                    const existingNode = this.openSet.get(neighborNode.state.id);
+                    if (existingNode && g < existingNode.g) {
+                        // Update the g value and parent
+                        existingNode.g = g;
+                        existingNode.parent = currentNode;
+
+                        // Since MinHeap doesn't support updating a node in place, we need to:
+                        // 1. Remove the existing node from the heap
+                        this.openList.data = this.openList.data.filter(node => node !== existingNode);
+                        
+                        // 2. Re-insert the updated node into the heap
+                        this.openList.insert(existingNode);
+                    }
+                } else {
+                    // If the neighbor isn't in the open list, add it
+                    this.addOpen(neighborNode);
+                }
             }
         }
 
-        return null; // No path found
-    }
-
-    getNeighbors(node) {
-        return this.graph.edges
-            .filter(edge => edge[0] === node)
-            .map(edge => edge[1]);
-    }
-
-    getDistance(node1, node2) {
-        let edge = this.graph.edges.find(edge => (edge[0] === node1 && edge[1] === node2) || (edge[0] === node2 && edge[1] === node1));
-        return edge ? edge[2] : Infinity;
+        return null; // If no path found
     }
 
     createGraphWithOptimalPath() {
-        let newGraph = { points: this.graph.points, edges: [] };
+        const newGraph = { points: [], edges: [] };
+        const pointSet = new Set();
+
         for (let i = 0; i < this.path.length - 1; i++) {
-            let node1 = this.path[i];
-            let node2 = this.path[i + 1];
-            let distance = this.getDistance(node1, node2);
-            newGraph.edges.push([node1, node2, distance]);
+            const node1 = this.path[i];
+            const node2 = this.path[i + 1];
+            const distance = this.getDistance(node1, node2);
+            newGraph.edges.push({ point1: node1, point2: node2, distance });
+            pointSet.add(node1);
+            pointSet.add(node2);
         }
+
+        newGraph.points = Array.from(pointSet);
+        console.log("Optimal path graph:", newGraph);
         return newGraph;
     }
 }

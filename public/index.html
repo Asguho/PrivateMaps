@@ -121,7 +121,7 @@
 				const end = graph.points[Math.floor(Math.random() * graph.points.length)];
 				const astar = new aStar(graph, start, end);
 				console.log("Running A* from", start, "to", end);
-				 fpath = new path(astar.run());
+				fpath = new path(astar.run(), "red");
 				console.log("Path found", fpath);
 				render();
 			});

@@ -11,12 +11,14 @@
 	<body>
 		<h1>Private Maps</h1>
 		<canvas id="mapCanvas"></canvas>
+		<button id = "aStar">Run A*</button>
 		<script type="module">
 			import { Point } from "./scripts/point.js";
 			import { Edge } from "./scripts/edge.js";
 			import { Graph } from "./scripts/graph.js";
 			import { OsmLoader } from "./scripts/osmLoader.js";
 			import { Viewport } from "./scripts/viewport.js";
+			import { aStar } from "./scripts/aStar.js";
 
 			const mapCanvas = document.getElementById("mapCanvas");
 			mapCanvas.width = window.innerWidth;
@@ -107,6 +109,28 @@
 						return;
 				}
 				render();
+			});
+			const aStarButton = document.getElementById("aStar");
+			aStarButton.addEventListener("click", () => {
+				//get random points as start and end
+				const start = graph.points[Math.floor(Math.random() * graph.points.length)];
+				const end = graph.points[Math.floor(Math.random() * graph.points.length)];
+				var astar = new aStar(graph, start, end);
+				var fpath = astar.run();
+				console.log("Running A* from", start, "to", end);
+				if (fpath && fpath.length > 0) {
+					console.log("Path found: ", fpath);
+					ctx.strokeStyle = "red";
+					ctx.lineWidth = 3;
+					ctx.beginPath();
+					const startCoords = fpath[0].point.toCanvasCoordinates(viewport);
+					ctx.moveTo(startCoords.x, startCoords.y);
+					for (let i = 1; i < fpath.length; i++) {
+						const coords = fpath[i].point.toCanvasCoordinates(viewport);
+						ctx.lineTo(coords.x, coords.y);
+					}
+					ctx.stroke();
+				}
 			});
 		</script>
 	</body>

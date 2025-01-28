@@ -11,12 +11,24 @@
 	<body>
 		<h1>Private Maps</h1>
 		<canvas id="mapCanvas"></canvas>
+		<button id = "Run">find shortest path</button>
+
+		<!--
+		<button id = "aStar">Run A*</button>
+		<button id = "Djikstra">Run Djikstra</button>
+		-->
+
 		<script type="module">
 			import { Point } from "./scripts/point.js";
 			import { Edge } from "./scripts/edge.js";
 			import { Graph } from "./scripts/graph.js";
 			import { OsmLoader } from "./scripts/osmLoader.js";
 			import { Viewport } from "./scripts/viewport.js";
+			import { aStar } from "./scripts/aStar.js";
+			import { path } from "./scripts/path.js";
+			import { Djikstra } from "./scripts/djikstra.js";
+			import  { PathFinding } from "./scripts/pathfinding.js";
+		
 
 			const mapCanvas = document.getElementById("mapCanvas");
 			mapCanvas.width = window.innerWidth;
@@ -24,6 +36,7 @@
 
 			const ctx = mapCanvas.getContext("2d");
 			const viewport = new Viewport(mapCanvas);
+			var fpath = null;
 
 			const loader = new OsmLoader();
 			const graph = await loader.load();
@@ -44,6 +57,8 @@
 			function render() {
 				ctx.clearRect(0, 0, mapCanvas.width, mapCanvas.height);
 				graph.draw(ctx, viewport);
+				if (fpath){ fpath.draw(ctx, viewport); }
+				
 			}
 			render();
 
@@ -106,6 +121,49 @@
 					default:
 						return;
 				}
+				render();
+			});
+			/*
+			const aStarButton = document.getElementById("aStar");
+			aStarButton.addEventListener("click", () => {
+				//get random points as start and end
+				const start = graph.points[Math.floor(Math.random() * graph.points.length)];
+				const end = graph.points[Math.floor(Math.random() * graph.points.length)];
+				const astar = new aStar(graph, start, end);
+				console.log("Running A* from", start, "to", end);
+				fpath = new path(astar.run(), "red");
+				console.log("Path found", fpath);
+				render();
+			});
+			const djikstraButton = document.getElementById("Djikstra");
+			djikstraButton.addEventListener("click", () => {
+				//get random points as start and end
+				const start = graph.points[Math.floor(Math.random() * graph.points.length)];
+				const end = graph.points[Math.floor(Math.random() * graph.points.length)];
+	
+				const djikstra = new Djikstra(graph, start, end);
+				console.log("Running djikstra from", start, "to", end);
+				const pathPoints = djikstra.run();
+				console.log("Djikstra path points:", pathPoints); // Add debugging here
+				fpath = new path(pathPoints, "blue");
+				console.log("Path found", fpath);
+				render();
+			});*/
+			const runButton = document.getElementById("Run");
+			runButton.addEventListener("click", () => {
+				//get random points as start and end
+				const start = graph.points[Math.floor(Math.random() * graph.points.length)];
+				const end = graph.points[Math.floor(Math.random() * graph.points.length)];
+				var pathfinding = new PathFinding(graph, start, end);
+				console.log("Running PathFinding from", start, "to", end);
+				const result = pathfinding.run();
+				const pathPoints = result.bestPath;
+				const algo = result.algorithm;
+				console.log("Pathfinding algorithm used:", algo);
+				console.log("PathFinding path points:", pathPoints);
+
+				//console.log("PathFinding path points:", pathPoints); // Add debugging here
+				fpath = new path(pathPoints, "red");
 				render();
 			});
 		</script>

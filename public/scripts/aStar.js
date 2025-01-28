@@ -1,101 +1,134 @@
-export class aStar{
-    constructor(){
-        this.openList = [];
+import { MinHeap } from './minheap.js';
+
+export class aStar {
+    constructor(graph, start, end) {
+        this.graph = graph;
+        this.start = start;
+        this.end = end;
         this.closedList = new Set();
         this.path = [];
+        this.openMap = new Map();
+        this.openList = new MinHeap((a, b) => a.f - b.f); // MinHeap for efficiency
+
+        // Prepare distance matrix
+        this.distances = new Map();
+        this.graph.edges.forEach(({ point1, point2, distance }) => {
+            if (!this.distances.has(point1.id)) this.distances.set(point1.id, new Map());
+            if (!this.distances.has(point2.id)) this.distances.set(point2.id, new Map());
+            const calculatedDistance = distance || this.heuristic(point1, point2);
+            this.distances.get(point1.id).set(point2.id, calculatedDistance);
+            this.distances.get(point2.id).set(point1.id, calculatedDistance);
+        });
+        
     }
-    //add node to open list
-    addOpen(node){
-        this.openList.push(node);
-        this.openList.sort((a, b) => a.f - b.f); //sorter efter mindste f value
+
+    openListEmpty() {
+        return this.openList.length === 0;
     }
-    //add node to closed list
-    addClosed(node){
-        this.closedList.push(node);
+
+    popOpen() {
+        return this.openList.pop();
     }
-    openListEmpty(){
-        return this.openList.length == 0;
+
+    addClosed(node) {
+        this.closedList.add(node.point);
     }
-    popOpen(){
-        return this.openList.shift();
-    }
-    isInClosed(){
-        return this.closedList.has(node);
+
+    isInClosed(point) {
+        return this.closedList.has(point);
     }
 
     reconstructPath(node) {
         const path = [];
         while (node) {
-          path.unshift(node.state); // Add node state to the path
-          node = node.parent; // Move to the parent node
+            path.push(node.point); // Add to the end
+            node = node.parent;
         }
-        return path;
-      }
-    
+        return path.reverse(); // Reverse the array once
+    }
 
 
-
-    heuristic(node, goal) { //haversine heuristic
+    heuristic(node, goal) { // Haversine heuristic
         const toRadians = (deg) => (deg * Math.PI) / 180;
-      
-        const [lat1, lon1] = node.coordinates;
-        const [lat2, lon2] = goal.coordinates;
-      
-        const R = 6371; // Radius of the Earth in kilometers
+
+        const [lat1, lon1] = [node.lat, node.lon];
+        const [lat2, lon2] = [goal.lat, goal.lon];
+
+        const R = 6371e3; // Radius of the Earth in kilometers
         const dLat = toRadians(lat2 - lat1);
         const dLon = toRadians(lon2 - lon1);
-      
         const a =
-          Math.sin(dLat / 2) ** 2 +
-          Math.cos(toRadians(lat1)) *
-            Math.cos(toRadians(lat2)) *
-            Math.sin(dLon / 2) ** 2;
-      
+            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
         const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         return R * c; // Distance in kilometers
-      }
-      
+    }
 
-    run(start, end){ //ikke færdig, skal også lige kigges i gennem lige 
-        const start = new Node("Start");
-        const goal = new Node("Goal");
+    run() {
+        let startNode = { point: this.start, parent: null, g: 0, f: this.heuristic(this.start, this.end) };
+        this.openList.insert(startNode);
 
-        start.g = 0; // Cost to reach the start node is 0
-        start.h = heuristic(start, goal); // Compute the heuristic estimate to the goal
-        start.f = start.g + start.h; // Total cost
-        this.addOpen(start);
-
-
-        while (!this.openListEmpty()){
-            const current = this.popOpen();
-            if (current.state === goal.state){
-                return this.reconstructPath(current);
+        while (!this.openListEmpty()) {
+            const currentNode = this.popOpen();
+            if (currentNode.point === this.end) {
+                this.path = this.reconstructPath(currentNode);
+                return this.path; // Return the path as an array of points
             }
-            this.addClosed(current);
-            for (const { node: neighbor, cost } of current.neighbors) {
-                if (this.isInClosed(neighbor)) continue; // Skip if already in closed list
-        
-                const tentativeG = current.g + cost; // Calculate tentative g-value
-        
-                // If the neighbor is not in the open list or the new g-value is better
-                if (!this.openList.includes(neighbor) || tentativeG < neighbor.g) {
-                  neighbor.g = tentativeG; // Update g-value
-                  neighbor.h = this.heuristic(neighbor, goal); // Update h-value
-                  neighbor.f = neighbor.g + neighbor.h; // Update f-value
-                  neighbor.parent = current; // Set parent for path reconstruction
-        
-                  if (!this.openList.includes(neighbor)) {
-                    this.addOpen(neighbor); // Add neighbor to open list
-                  }
+
+            this.addClosed(currentNode);
+
+            const neighbors = this.getNeighbors(currentNode.point);
+            for (const neighbor of neighbors) {
+                if (this.isInClosed(neighbor)) continue;
+
+                const gScore = currentNode.g + this.getDistance(currentNode.point, neighbor);
+                const hScore = this.heuristic(neighbor, this.end);
+                const fScore = gScore + hScore;
+
+                const neighborNode = {
+                    point: neighbor,
+                    parent: currentNode,
+                    g: gScore,
+                    h: hScore,
+                    f: fScore
+                };
+
+                if (!this.openMap.has(neighbor) || this.openMap.get(neighbor).f > fScore) {
+                    this.openMap.set(neighbor, neighborNode);
+                    this.openList.insert(neighborNode);
                 }
-              }
+            }
         }
-        
-            // If the open list is empty and goal was not reached, return null
-        return null;
+
+        return null; // No path found
+    }
+
+    getNeighbors(point) {
+        return this.graph.edges
+            .filter(edge => edge.point1 === point || edge.point2 === point)
+            .map(edge => edge.point1 === point ? edge.point2 : edge.point1);
+    }
+
+    getDistance(point1, point2) {
+        return this.distances.get(point1.id)?.get(point2.id) || Infinity;
+    }
+
+    createGraphWithOptimalPath() {
+        const newGraph = { points: [], edges: [] };
+        const pointSet = new Set();
+
+        for (let i = 0; i < this.path.length - 1; i++) {
+            const point1 = this.path[i];
+            const point2 = this.path[i + 1];
+            const distance = this.getDistance(point1, point2);
+            newGraph.edges.push({ point1, point2, distance });
+            pointSet.add(point1);
+            pointSet.add(point2);
+        }
+
+        newGraph.points = Array.from(pointSet);
+        console.log("Optimal path graph:", newGraph);
+        return newGraph;
     }
 }
-
-
-    
-

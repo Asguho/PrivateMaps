@@ -22,12 +22,13 @@ export class Djikstra {
         this.distances = new Map();
 
         // Prepare distance matrix
-        this.graph.edges.forEach(({ point1, point2, distance }) => {
+        this.graph.edges.forEach(({ point1, point2, isCarAllowed }) => {
             if (!this.distances.has(point1.id)) this.distances.set(point1.id, new Map());
             if (!this.distances.has(point2.id)) this.distances.set(point2.id, new Map());
-            const calculatedDistance = distance || this.haversineDistance(point1.lat, point1.lon, point2.lat, point2.lon);
+            const calculatedDistance = isCarAllowed ? this.haversineDistance(point1, point2) : Infinity;
             this.distances.get(point1.id).set(point2.id, calculatedDistance);
             this.distances.get(point2.id).set(point1.id, calculatedDistance);
+            
         });
     }
     haversineDistance(lat1, lon1, lat2, lon2) {
@@ -72,9 +73,12 @@ export class Djikstra {
 
     getNeighbors(point) {
         return this.graph.edges
-            .filter(({ point1, point2 }) => point1.id === point.id || point2.id === point.id)
+            .filter(({ point1, point2, isCarAllowed }) => 
+                isCarAllowed && (point1.id === point.id || point2.id === point.id)
+            )
             .map(({ point1, point2 }) => (point1.id === point.id ? point2 : point1));
     }
+    
 
     getDistance(point1, point2) {
         return this.distances.get(point1.id)?.get(point2.id) ?? Infinity;

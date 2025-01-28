@@ -1,5 +1,4 @@
 
-//find best path from both astar and djikstra
 import { aStar } from "./aStar.js";
 import { Djikstra } from "./djikstra.js";
 export class PathFinding {
@@ -27,8 +26,8 @@ export class PathFinding {
         const djikstraPath = this.djikstra.run();
 
         const aStarDistance = this.calculateTotalDistance(aStarPath, this.aStar.distances);
-        const djikstraDistance = this.calculateTotalDistance(djikstraPath, this.djikstra.distances);
-
+        //const djikstraDistance = this.calculateTotalDistance(djikstraPath, this.djikstra.distances);
+        const djikstraDistance = 1000000
         console.log(`A* distance: ${aStarDistance}, Djikstra distance: ${djikstraDistance}`);
         if (aStarDistance <= djikstraDistance) {
             return { bestPath: aStarPath, algorithm: 'A*' };

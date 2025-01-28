@@ -15,7 +15,7 @@ export class aStar {
         this.graph.edges.forEach(({ point1, point2, isCarAllowed }) => {
             if (!this.distances.has(point1.id)) this.distances.set(point1.id, new Map());
             if (!this.distances.has(point2.id)) this.distances.set(point2.id, new Map());
-            const calculatedDistance = isCarAllowed ? this.heuristic(point1, point2) : Infinity;
+            const calculatedDistance = isCarAllowed ? this.heuristic(point1, point2) : null;
             this.distances.get(point1.id).set(point2.id, calculatedDistance);
             this.distances.get(point2.id).set(point1.id, calculatedDistance);
         });
@@ -90,7 +90,12 @@ export class aStar {
 
                 const gScore = currentNode.g + this.getDistance(currentNode.point, neighbor);
                 const hScore = this.heuristic(neighbor, this.end);
-                const fScore = gScore + hScore;
+                const fScore = gScore + hScore + 0.001 * hScore;
+                /*
+                console.log("gScore:", gScore);
+                console.log("hScore:", hScore);
+                console.log("fScore:", fScore);
+                */
 
                 const neighborNode = {
                     point: neighbor,
@@ -119,7 +124,7 @@ export class aStar {
     }
 
     getDistance(point1, point2) {
-        return this.distances.get(point1.id)?.get(point2.id) || Infinity;
+        return this.distances.get(point1.id)?.get(point2.id) || null;
     }
 
     createGraphWithOptimalPath() {

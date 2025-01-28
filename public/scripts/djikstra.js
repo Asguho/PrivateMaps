@@ -8,8 +8,6 @@ export class DjikstraNode {
     }
 }
 
-
-
 export class Djikstra {
     constructor(graph, start, end) {
         this.graph = graph;
@@ -25,10 +23,11 @@ export class Djikstra {
         this.graph.edges.forEach(({ point1, point2, isCarAllowed }) => {
             if (!this.distances.has(point1.id)) this.distances.set(point1.id, new Map());
             if (!this.distances.has(point2.id)) this.distances.set(point2.id, new Map());
-            const calculatedDistance = isCarAllowed ? this.haversineDistance(point1, point2) : Infinity;
+            const calculatedDistance = isCarAllowed ?
+                this.haversineDistance(point1.lat, point1.lon, point2.lat, point2.lon) :
+                Infinity;
             this.distances.get(point1.id).set(point2.id, calculatedDistance);
             this.distances.get(point2.id).set(point1.id, calculatedDistance);
-            
         });
     }
     haversineDistance(lat1, lon1, lat2, lon2) {
@@ -37,13 +36,12 @@ export class Djikstra {
         const dLat = toRadians(lat2 - lat1);
         const dLon = toRadians(lon2 - lon1);
         const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                  Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) *
-                  Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
         const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    
+
         return R * c;
     }
-    
 
     addOpen(node) {
         this.openList.insert(node);
@@ -73,12 +71,11 @@ export class Djikstra {
 
     getNeighbors(point) {
         return this.graph.edges
-            .filter(({ point1, point2, isCarAllowed }) => 
+            .filter(({ point1, point2, isCarAllowed }) =>
                 isCarAllowed && (point1.id === point.id || point2.id === point.id)
             )
             .map(({ point1, point2 }) => (point1.id === point.id ? point2 : point1));
     }
-    
 
     getDistance(point1, point2) {
         return this.distances.get(point1.id)?.get(point2.id) ?? Infinity;
@@ -119,7 +116,7 @@ export class Djikstra {
                         // Since MinHeap doesn't support updating a node in place, we need to:
                         // 1. Remove the existing node from the heap
                         this.openList.data = this.openList.data.filter(node => node !== existingNode);
-                        
+
                         // 2. Re-insert the updated node into the heap
                         this.openList.insert(existingNode);
                     }

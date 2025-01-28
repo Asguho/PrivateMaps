@@ -12,10 +12,10 @@ export class aStar {
 
         // Prepare distance matrix
         this.distances = new Map();
-        this.graph.edges.forEach(({ point1, point2, distance }) => {
+        this.graph.edges.forEach(({ point1, point2, isCarAllowed }) => {
             if (!this.distances.has(point1.id)) this.distances.set(point1.id, new Map());
             if (!this.distances.has(point2.id)) this.distances.set(point2.id, new Map());
-            const calculatedDistance = distance || this.heuristic(point1, point2);
+            const calculatedDistance = isCarAllowed ? this.heuristic(point1, point2) : null;
             this.distances.get(point1.id).set(point2.id, calculatedDistance);
             this.distances.get(point2.id).set(point1.id, calculatedDistance);
         });
@@ -23,7 +23,7 @@ export class aStar {
     }
 
     openListEmpty() {
-        return this.openList.length === 0;
+        return this.openList.data.length === 0;
     }
 
     popOpen() {
@@ -68,9 +68,13 @@ export class aStar {
     run() {
         let startNode = { point: this.start, parent: null, g: 0, f: this.heuristic(this.start, this.end) };
         this.openList.insert(startNode);
+        
 
         while (!this.openListEmpty()) {
+           // console.log("Current openList empty:", this.openListEmpty());
             const currentNode = this.popOpen();
+           // console.log("Current node:", currentNode);
+           // console.log("end:", this.end);
             if (currentNode.point === this.end) {
                 this.path = this.reconstructPath(currentNode);
                 return this.path; // Return the path as an array of points
@@ -79,12 +83,19 @@ export class aStar {
             this.addClosed(currentNode);
 
             const neighbors = this.getNeighbors(currentNode.point);
+           // console.log("Neighbors:", neighbors);
+
             for (const neighbor of neighbors) {
                 if (this.isInClosed(neighbor)) continue;
 
                 const gScore = currentNode.g + this.getDistance(currentNode.point, neighbor);
                 const hScore = this.heuristic(neighbor, this.end);
-                const fScore = gScore + hScore;
+                const fScore = gScore + hScore + 0.001 * hScore;
+                /*
+                console.log("gScore:", gScore);
+                console.log("hScore:", hScore);
+                console.log("fScore:", fScore);
+                */
 
                 const neighborNode = {
                     point: neighbor,
@@ -106,12 +117,14 @@ export class aStar {
 
     getNeighbors(point) {
         return this.graph.edges
-            .filter(edge => edge.point1 === point || edge.point2 === point)
-            .map(edge => edge.point1 === point ? edge.point2 : edge.point1);
+            .filter(({ point1, point2, isCarAllowed }) => 
+                isCarAllowed && (point1.id === point.id || point2.id === point.id)
+            )
+            .map(({ point1, point2 }) => (point1.id === point.id ? point2 : point1));
     }
 
     getDistance(point1, point2) {
-        return this.distances.get(point1.id)?.get(point2.id) || Infinity;
+        return this.distances.get(point1.id)?.get(point2.id) || null;
     }
 
     createGraphWithOptimalPath() {

@@ -11,7 +11,16 @@
 	<body>
 		<h1>Private Maps</h1>
 		<canvas id="mapCanvas"></canvas>
+		<br>
+
+		<!-- find ud af at lave det her smartere-->
 		<button id = "Run">find shortest path</button>
+		<br>
+		<textarea id="start" rows="1" cols="50">Enter start location</textarea>
+		<br>
+		<textarea id="end" rows="1" cols="50">Enter end location</textarea>
+		<br>
+		<button id = "lookUp">Lookup</button>
 
 		<!--
 		<button id = "aStar">Run A*</button>
@@ -28,6 +37,7 @@
 			import { path } from "./scripts/path.js";
 			import { Djikstra } from "./scripts/djikstra.js";
 			import  { PathFinding } from "./scripts/pathfinding.js";
+			import { geoCoder } from "./scripts/geoCoder.js";
 		
 
 			const mapCanvas = document.getElementById("mapCanvas");
@@ -40,6 +50,8 @@
 
 			const loader = new OsmLoader();
 			const graph = await loader.load();
+			var startCoords;
+			var endCoords;
 
 			// Compute bounding box
 			let latMin = Infinity,
@@ -151,19 +163,45 @@
 			});*/
 			const runButton = document.getElementById("Run");
 			runButton.addEventListener("click", () => {
-				//get random points as start and end
-				const start = graph.points[Math.floor(Math.random() * graph.points.length)];
-				const end = graph.points[Math.floor(Math.random() * graph.points.length)];
-				var pathfinding = new PathFinding(graph, start, end);
-				console.log("Running PathFinding from", start, "to", end);
+				//make the start and end coords snap to the nearest point
+				const startpoint = graph.placePointOnEdge(startCoords.y, startCoords.x);
+				const endpoint = graph.placePointOnEdge(endCoords.y, endCoords.x);
+
+				
+				const pathfinding = new PathFinding(graph, startpoint, endpoint);
+				console.log("Running PathFinding from", startpoint, "to", endpoint);
+				
 				const result = pathfinding.run();
 				const pathPoints = result.bestPath;
 				const algo = result.algorithm;
 				console.log("Pathfinding algorithm used:", algo);
 				console.log("PathFinding path points:", pathPoints);
 
+
 				//console.log("PathFinding path points:", pathPoints); // Add debugging here
 				fpath = new path(pathPoints, "red");
+				
+				
+				render();
+			});
+			const lookUpButton = document.getElementById("lookUp");
+			lookUpButton.addEventListener("click", async () => {
+				const start = document.getElementById("start").value;
+				const end = document.getElementById("end").value;
+				const geocoder = new geoCoder();
+				try{
+					startCoords = await geocoder.run(start);
+					endCoords = await geocoder.run(end);
+					console.log("Start Coords:", startCoords);
+					console.log("End Coords:", endCoords);
+				}
+				catch(e){
+					console.log("Error:", e);
+				}
+
+
+				//console.log("PathFinding path points:", pathPoints); // Add debugging here
+				//fpath = new path(pathPoints, "red");
 				render();
 			});
 		</script>

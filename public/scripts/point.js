@@ -12,7 +12,7 @@ export class Point {
     draw(ctx, viewport) {
         const { x, y } = this.toCanvasCoordinates(viewport);
         ctx.beginPath();
-        ctx.arc(x, y, 5, 0, 2 * Math.PI);
+        ctx.arc(x, y, 3, 0, 2 * Math.PI);
         ctx.fillStyle = 'black';
         ctx.fill();
     }

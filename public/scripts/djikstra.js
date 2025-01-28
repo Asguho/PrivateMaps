@@ -8,22 +8,7 @@ export class DjikstraNode {
     }
 }
 
-function haversineDistance(lat1, lon1, lat2, lon2) {
-    const R = 6371e3; // Earth radius in meters
-    const toRadians = (degrees) => degrees * Math.PI / 180;
 
-    const a1 = toRadians(lat1);
-    const a2 = toRadians(lat2);
-    const b1 = toRadians(lat2 - lat1);
-    const b2 = toRadians(lon2 - lon1);
-
-    const a = Math.sin(b2 / 2) * Math.sin(b2 / 2) +
-              Math.cos(a1) * Math.cos(a2) *
-              Math.sin(b2 / 2) * Math.sin(b2 / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-    return R * c; // Distance in meters
-}
 
 export class Djikstra {
     constructor(graph, start, end) {
@@ -40,11 +25,24 @@ export class Djikstra {
         this.graph.edges.forEach(({ point1, point2, distance }) => {
             if (!this.distances.has(point1.id)) this.distances.set(point1.id, new Map());
             if (!this.distances.has(point2.id)) this.distances.set(point2.id, new Map());
-            const calculatedDistance = distance || haversineDistance(point1.lat, point1.lon, point2.lat, point2.lon);
+            const calculatedDistance = distance || this.haversineDistance(point1.lat, point1.lon, point2.lat, point2.lon);
             this.distances.get(point1.id).set(point2.id, calculatedDistance);
             this.distances.get(point2.id).set(point1.id, calculatedDistance);
         });
     }
+    haversineDistance(lat1, lon1, lat2, lon2) {
+        const R = 6371e3; // Earth radius in meters
+        const toRadians = (degrees) => degrees * Math.PI / 180;
+        const dLat = toRadians(lat2 - lat1);
+        const dLon = toRadians(lon2 - lon1);
+        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                  Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) *
+                  Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    
+        return R * c;
+    }
+    
 
     addOpen(node) {
         this.openList.insert(node);
@@ -92,7 +90,6 @@ export class Djikstra {
             // If we reach the destination, reconstruct the path
             if (currentNode.state.id === this.end.id) {
                 this.path = this.reconstructPath(currentNode);
-                console.log("Path found:", this.path);
                 return this.path; // Return the path as an array of points
             }
 

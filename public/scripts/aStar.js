@@ -12,13 +12,14 @@ export class aStar {
 
         // Prepare distance matrix
         this.distances = new Map();
-        this.graph.edges.forEach(edge => {
-            const { point1, point2, distance } = edge;
-            if (!this.distances.has(point1)) this.distances.set(point1, new Map());
-            if (!this.distances.has(point2)) this.distances.set(point2, new Map());
-            this.distances.get(point1).set(point2, distance);
-            this.distances.get(point2).set(point1, distance);
+        this.graph.edges.forEach(({ point1, point2, distance }) => {
+            if (!this.distances.has(point1.id)) this.distances.set(point1.id, new Map());
+            if (!this.distances.has(point2.id)) this.distances.set(point2.id, new Map());
+            const calculatedDistance = distance || this.heuristic(point1, point2);
+            this.distances.get(point1.id).set(point2.id, calculatedDistance);
+            this.distances.get(point2.id).set(point1.id, calculatedDistance);
         });
+        
     }
 
     openListEmpty() {
@@ -46,13 +47,14 @@ export class aStar {
         return path.reverse(); // Reverse the array once
     }
 
+
     heuristic(node, goal) { // Haversine heuristic
         const toRadians = (deg) => (deg * Math.PI) / 180;
 
         const [lat1, lon1] = [node.lat, node.lon];
         const [lat2, lon2] = [goal.lat, goal.lon];
 
-        const R = 6371; // Radius of the Earth in kilometers
+        const R = 6371e3; // Radius of the Earth in kilometers
         const dLat = toRadians(lat2 - lat1);
         const dLon = toRadians(lon2 - lon1);
         const a =
@@ -71,7 +73,6 @@ export class aStar {
             const currentNode = this.popOpen();
             if (currentNode.point === this.end) {
                 this.path = this.reconstructPath(currentNode);
-                console.log("Path found:", this.path);
                 return this.path; // Return the path as an array of points
             }
 
@@ -100,7 +101,6 @@ export class aStar {
             }
         }
 
-        console.log("No path found");
         return null; // No path found
     }
 
@@ -111,7 +111,7 @@ export class aStar {
     }
 
     getDistance(point1, point2) {
-        return this.distances.get(point1)?.get(point2) || Infinity;
+        return this.distances.get(point1.id)?.get(point2.id) || Infinity;
     }
 
     createGraphWithOptimalPath() {

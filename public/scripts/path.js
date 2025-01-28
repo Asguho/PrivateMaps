@@ -8,7 +8,7 @@ export class path {
             ctx.strokeStyle = this.colour;
             ctx.lineWidth = 3;
             ctx.beginPath();
-            console.log("points: " + this.points);
+            //console.log("points: " + this.points);
             const startCoords = this.points[0].toCanvasCoordinates(viewport);
             ctx.moveTo(startCoords.x, startCoords.y);
             for (let i = 1; i < this.points.length; i++) {

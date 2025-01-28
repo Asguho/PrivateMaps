@@ -156,9 +156,14 @@
 				const end = graph.points[Math.floor(Math.random() * graph.points.length)];
 				var pathfinding = new PathFinding(graph, start, end);
 				console.log("Running PathFinding from", start, "to", end);
-				const pathPoints = pathfinding.run();
-				console.log("PathFinding path points:", pathPoints); // Add debugging here
-				fpath = new path(pathPoints, "blue");
+				const result = pathfinding.run();
+				const pathPoints = result.bestPath;
+				const algo = result.algorithm;
+				console.log("Pathfinding algorithm used:", algo);
+				console.log("PathFinding path points:", pathPoints);
+
+				//console.log("PathFinding path points:", pathPoints); // Add debugging here
+				fpath = new path(pathPoints, "red");
 				render();
 			});
 		</script>

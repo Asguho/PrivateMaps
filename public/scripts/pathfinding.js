@@ -15,20 +15,27 @@ export class PathFinding {
         for (let i = 0; i < path.length - 1; i++) {
             const point1 = path[i];
             const point2 = path[i + 1];
-            totalDistance += distances.get(point1.id)?.get(point2.id) || 0;
+            const distance = distances.get(point1.id)?.get(point2.id) || 0;
+            totalDistance += distance;
         }
         return totalDistance;
     }
+    
     run() {
+        //når turene bliver længere bør det overvejes om der skal favoriseres A* fremfor djikstra pga. compute tid
         const aStarPath = this.aStar.run();
         const djikstraPath = this.djikstra.run();
-        const aStarDistance = calculateTotalDistance(aStarPath, this.aStar.distances);
-        const djikstraDistance = calculateTotalDistance(djikstraPath, this.djikstra.distances);
-        if (aStarDistance < djikstraDistance) {
+
+        const aStarDistance = this.calculateTotalDistance(aStarPath, this.aStar.distances);
+        const djikstraDistance = this.calculateTotalDistance(djikstraPath, this.djikstra.distances);
+
+        console.log(`A* distance: ${aStarDistance}, Djikstra distance: ${djikstraDistance}`);
+        if (aStarDistance <= djikstraDistance) {
             return { bestPath: aStarPath, algorithm: 'A*' };
         } else {
             return { bestPath: djikstraPath, algorithm: 'Djikstra' };
         }
     }
+    
     
 }

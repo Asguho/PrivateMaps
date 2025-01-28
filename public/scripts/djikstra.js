@@ -1,4 +1,5 @@
 import { MinHeap } from './minheap.js';
+import { Algo } from './algo.js';
 
 export class DjikstraNode {
     constructor(state, parent, g) {
@@ -8,40 +9,22 @@ export class DjikstraNode {
     }
 }
 
-export class Djikstra {
+export class Djikstra extends Algo {
     constructor(graph, start, end) {
-        this.graph = graph;
-        this.start = start;
-        this.end = end;
+        super(graph, start, end);
         this.openList = new MinHeap((a, b) => a.g - b.g); // MinHeap for efficiency
-        this.openSet = new Map(); // Map to track elements in the open list (for fast look-up)
-        this.closedList = new Set();
-        this.path = [];
-        this.distances = new Map();
-
-        // Prepare distance matrix
         this.graph.edges.forEach(({ point1, point2, isCarAllowed }) => {
             if (!this.distances.has(point1.id)) this.distances.set(point1.id, new Map());
             if (!this.distances.has(point2.id)) this.distances.set(point2.id, new Map());
             const calculatedDistance = isCarAllowed ?
-                this.haversineDistance(point1.lat, point1.lon, point2.lat, point2.lon) :
+                this.distance(point1, point2) :
                 Infinity;
             this.distances.get(point1.id).set(point2.id, calculatedDistance);
             this.distances.get(point2.id).set(point1.id, calculatedDistance);
         });
+        
     }
-    haversineDistance(lat1, lon1, lat2, lon2) {
-        const R = 6371e3; // Earth radius in meters
-        const toRadians = (degrees) => degrees * Math.PI / 180;
-        const dLat = toRadians(lat2 - lat1);
-        const dLon = toRadians(lon2 - lon1);
-        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-            Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) *
-            Math.sin(dLon / 2) * Math.sin(dLon / 2);
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
-        return R * c;
-    }
 
     addOpen(node) {
         this.openList.insert(node);
@@ -58,27 +41,6 @@ export class Djikstra {
 
     isInOpen(state) {
         return this.openSet.has(state.id);
-    }
-
-    reconstructPath(node) {
-        const path = [];
-        while (node) {
-            path.push(node.state);
-            node = node.parent;
-        }
-        return path.reverse();
-    }
-
-    getNeighbors(point) {
-        return this.graph.edges
-            .filter(({ point1, point2, isCarAllowed }) =>
-                isCarAllowed && (point1.id === point.id || point2.id === point.id)
-            )
-            .map(({ point1, point2 }) => (point1.id === point.id ? point2 : point1));
-    }
-
-    getDistance(point1, point2) {
-        return this.distances.get(point1.id)?.get(point2.id) ?? Infinity;
     }
 
     run() {
@@ -129,22 +91,8 @@ export class Djikstra {
 
         return null; // If no path found
     }
-
-    createGraphWithOptimalPath() {
-        const newGraph = { points: [], edges: [] };
-        const pointSet = new Set();
-
-        for (let i = 0; i < this.path.length - 1; i++) {
-            const node1 = this.path[i];
-            const node2 = this.path[i + 1];
-            const distance = this.getDistance(node1, node2);
-            newGraph.edges.push({ point1: node1, point2: node2, distance });
-            pointSet.add(node1);
-            pointSet.add(node2);
-        }
-
-        newGraph.points = Array.from(pointSet);
-        console.log("Optimal path graph:", newGraph);
-        return newGraph;
+    getDistance(point1, point2) {
+        return this.distances.get(point1.id)?.get(point2.id) ?? Infinity;
     }
+    
 }

@@ -23,6 +23,12 @@ export class PathFinding {
         //når turene bliver længere bør det overvejes om der skal favoriseres A* fremfor djikstra pga. compute tid
         const aStarPath = this.aStar.run();
         const djikstraPath = this.djikstra.run();
+        /*
+        console.log("A* path:", aStarPath);
+        console.log("Djikstra path:", djikstraPath);
+        console.log("A* distances:", this.aStar.distances);
+        console.log("Djikstra distances:", this.djikstra.distances);
+        */
 
         const aStarDistance = this.calculateTotalDistance(aStarPath, this.aStar.distances);
         const djikstraDistance = this.calculateTotalDistance(djikstraPath, this.djikstra.distances);

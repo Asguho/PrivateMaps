@@ -1,7 +1,7 @@
 import { type Point } from './point.ts';
 import { Viewport } from './viewport.ts';
 
-export class path {
+export class Path {
   points: Point[];
   colour: string;
 

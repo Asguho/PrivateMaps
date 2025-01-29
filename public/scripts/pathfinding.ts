@@ -1,8 +1,9 @@
-import { Path } from 'npm:path-to-regexp@^6.3.0';
 import { aStar } from './aStar.ts';
 import { Djikstra } from './djikstra.ts';
 import { Graph } from './graph.ts';
 import { Point } from './point.ts';
+import { Path } from './path.ts';
+
 export class PathFinding {
   graph: Graph;
   start: Point;
@@ -17,11 +18,11 @@ export class PathFinding {
     this.aStar = new aStar(graph, start, end);
     this.djikstra = new Djikstra(graph, start, end);
   }
-  calculateTotalDistance(path: Path, distances: Map<number, Map<number, number>>) {
+  calculateTotalDistance(path: Path, distances: Map<number | null, Map<number | null, number | null>>) {
     let totalDistance = 0;
-    for (let i = 0; i < path.length - 1; i++) {
-      const point1 = path[i];
-      const point2 = path[i + 1];
+    for (let i = 0; i < path.points.length - 1; i++) {
+      const point1 = path.points[i];
+      const point2 = path.points[i + 1];
       const distance = distances.get(point1.id)?.get(point2.id) || 0;
       totalDistance += distance;
     }
@@ -39,8 +40,8 @@ export class PathFinding {
         console.log("Djikstra distances:", this.djikstra.distances);
         */
 
-    const aStarDistance = this.calculateTotalDistance(aStarPath, this.aStar.distances);
-    const djikstraDistance = this.calculateTotalDistance(djikstraPath, this.djikstra.distances);
+    const aStarDistance = this.calculateTotalDistance(aStarPath as unknown as Path, this.aStar.distances);
+    const djikstraDistance = this.calculateTotalDistance(djikstraPath as unknown as Path, this.djikstra.distances);
     console.log(`A* distance: ${aStarDistance}, Djikstra distance: ${djikstraDistance}`);
     if (aStarDistance <= djikstraDistance) {
       return { bestPath: aStarPath, algorithm: 'A*' };

@@ -49,6 +49,8 @@ export class Graph {
   placePointOnEdge(lat: number, lon: number) {
     const { edge, closest } = this.nearestEdge(lat, lon);
     console.log(edge);
+
+    // @ts-ignore
     const { point1, point2 } = edge;
 
     /*         const t = ((x - x1) * (x2 - x1) + (y - y1) * (y2 - y1)) / ((x2 - x1) ** 2 + (y2 - y1) ** 2);
@@ -56,18 +58,20 @@ export class Graph {
         const x0 = x1 + clampedT * (x2 - x1);
         const y0 = y1 + clampedT * (y2 - y1); */
 
+    // @ts-ignore
     const newPoint = new Point(this.points.length + 1, closest.y, closest.x);
     console.log(newPoint);
     this.addPoint(newPoint);
 
     this.edges = this.edges.filter((e) => e !== edge);
+    // @ts-ignore
     this.addEdge(new Edge(point1, newPoint, edge.type, edge.maxSpeed, edge.streetName));
+    // @ts-ignore
     this.addEdge(new Edge(newPoint, point2, edge.type, edge.maxSpeed, edge.streetName));
 
     return newPoint;
   }
-
-  distanceToSegment(pt, p1, p2) {
+  distanceToSegment(pt: { x: number; y: number }, p1: { x: number; y: number }, p2: { x: number; y: number }) {
     let closest = { x: 0, y: 0 };
 
     let dx = p2.x - p1.x;

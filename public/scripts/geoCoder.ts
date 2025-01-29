@@ -4,7 +4,7 @@ export class geoCoder {
     this.url = 'https://photon.komoot.io/api/?q=';
   }
 
-  async run(query) {
+  async run(query: string) {
     try {
       const response = await fetch(this.url + encodeURIComponent(query));
       if (!response.ok) {

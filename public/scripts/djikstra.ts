@@ -1,15 +1,7 @@
-import { MinHeap } from './minheap.js';
-import { Algo } from './algo.ts';
+import { Algo, DjikstraNode } from './algo.ts';
 import { Graph } from './graph.ts';
+import { MinHeap } from './minHeap.ts';
 import { Point } from './point.ts';
-
-export class DjikstraNode {
-  constructor(state, parent, g) {
-    this.state = state;
-    this.parent = parent;
-    this.g = g; // The distance from the start node
-  }
-}
 
 export class Djikstra extends Algo {
   constructor(graph: Graph, start: Point, end: Point) {
@@ -19,8 +11,8 @@ export class Djikstra extends Algo {
       if (!this.distances.has(point1.id)) this.distances.set(point1.id, new Map());
       if (!this.distances.has(point2.id)) this.distances.set(point2.id, new Map());
       const calculatedDistance = isCarAllowed ? this.distance(point1, point2) : Infinity;
-      this.distances.get(point1.id).set(point2.id, calculatedDistance);
-      this.distances.get(point2.id).set(point1.id, calculatedDistance);
+      this.distances.get(point1.id)?.set(point2.id, calculatedDistance);
+      this.distances.get(point2.id)?.set(point1.id, calculatedDistance);
     });
   }
 
@@ -49,9 +41,9 @@ export class Djikstra extends Algo {
       const currentNode = this.openList.pop();
 
       // If we reach the destination, reconstruct the path
-      if (currentNode.state.id === this.end.id) {
-        this.path = this.reconstructPath(currentNode);
-        return this.path; // Return the path as an array of points
+      if (currentNode.point === this.end) {
+        this.currentPath = this.reconstructPath(currentNode);
+        return this.currentPath; // Return the path as an array of points
       }
 
       // Mark current node as visited
@@ -62,12 +54,13 @@ export class Djikstra extends Algo {
         if (this.isInClosed(neighbor)) continue;
 
         const g = currentNode.g + this.getDistance(currentNode.state, neighbor);
-        let neighborNode = new DjikstraNode(neighbor, currentNode, g);
+        const neighborNode = new DjikstraNode(neighbor, currentNode, g);
 
         // If the neighbor is already in the open list, check if the new g is better
-        if (this.isInOpen(neighborNode.state)) {
+        const neighborPoint = new Point(neighborNode.id, neighborNode.lat, neighborNode.lon);
+        if (this.isInOpen(neighborPoint)) {
           // Check if this new path to the neighbor is better (lower g value)
-          const existingNode = this.openSet.get(neighborNode.state.id);
+          const existingNode = this.openSet.get(neighborPoint) as DjikstraNode;
           if (existingNode && g < existingNode.g) {
             // Update the g value and parent
             existingNode.g = g;
@@ -75,7 +68,7 @@ export class Djikstra extends Algo {
 
             // Since MinHeap doesn't support updating a node in place, we need to:
             // 1. Remove the existing node from the heap
-            this.openList.data = this.openList.data.filter((node) => node !== existingNode);
+            this.openList.data = this.openList.data.filter((node: DjikstraNode) => node !== existingNode);
 
             // 2. Re-insert the updated node into the heap
             this.openList.insert(existingNode);
@@ -89,7 +82,7 @@ export class Djikstra extends Algo {
 
     return null; // If no path found
   }
-  getDistance(point1, point2) {
+  getDistance(point1: Point, point2: Point) {
     return this.distances.get(point1.id)?.get(point2.id) ?? Infinity;
   }
 }

@@ -1,209 +1,211 @@
 <!DOCTYPE html>
 <html lang="en">
-	<head>
-		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Private Maps</title>
-		<description>The privacy of OpenStreetMap with the convenience of Google Maps</description>
-		<link rel="stylesheet" href="styles/styles.css" />
-	</head>
 
-	<body>
-		<h1>Private Maps</h1>
-		<canvas id="mapCanvas"></canvas>
-		<br>
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Private Maps</title>
+	<description>The privacy of OpenStreetMap with the convenience of Google Maps</description>
+	<link rel="stylesheet" href="styles/styles.css" />
+</head>
 
-		<!-- find ud af at lave det her smartere-->
-		<button id = "Run">find shortest path</button>
-		<br>
-		<textarea id="start" rows="1" cols="50">Enter start location</textarea>
-		<br>
-		<textarea id="end" rows="1" cols="50">Enter end location</textarea>
-		<br>
-		<button id = "lookUp">Lookup</button>
+<body>
+	<h1>Private Maps</h1>
+	<canvas id="mapCanvas"></canvas>
+	<br>
 
-		<!--
+	<!-- find ud af at lave det her smartere-->
+	<button id="Run">find shortest path</button>
+	<br>
+	<textarea id="start" rows="1" cols="50">Enter start location</textarea>
+	<br>
+	<textarea id="end" rows="1" cols="50">Enter end location</textarea>
+	<br>
+	<button id="lookUp">Lookup</button>
+
+	<!--
 		<button id = "aStar">Run A*</button>
 		<button id = "Djikstra">Run Djikstra</button>
 		-->
 
-		<script type="module">
-			import { Point } from "./scripts/point.js";
-			import { Edge } from "./scripts/edge.js";
-			import { Graph } from "./scripts/graph.js";
-			import { OsmLoader } from "./scripts/osmLoader.js";
-			import { Viewport } from "./scripts/viewport.js";
-			import { aStar } from "./scripts/aStar.js";
-			import { path } from "./scripts/path.js";
-			import { Djikstra } from "./scripts/djikstra.js";
-			import  { PathFinding } from "./scripts/pathfinding.js";
-			import { geoCoder } from "./scripts/geoCoder.js";
-		
+	<script type="module">
+		import { Point } from "./scripts/point.ts";
+		import { Edge } from "./scripts/edge.ts";
+		import { Graph } from "./scripts/graph.ts";
+		import { OsmLoader } from "./scripts/osmLoader.ts";
+		import { Viewport } from "./scripts/viewport.ts";
+		import { aStar } from "./scripts/aStar.ts";
+		import { path } from "./scripts/path.ts";
+		import { Djikstra } from "./scripts/djikstra.ts";
+		import { PathFinding } from "./scripts/pathfinding.ts";
+		import { geoCoder } from "./scripts/geoCoder.ts";
 
-			const mapCanvas = document.getElementById("mapCanvas");
-			mapCanvas.width = window.innerWidth;
-			mapCanvas.height = window.innerHeight;
 
-			const ctx = mapCanvas.getContext("2d");
-			const viewport = new Viewport(mapCanvas);
-			var fpath = null;
+		const mapCanvas = document.getElementById("mapCanvas");
+		mapCanvas.width = window.innerWidth;
+		mapCanvas.height = window.innerHeight;
 
-			const loader = new OsmLoader();
-			const graph = await loader.load();
-			var startCoords;
-			var endCoords;
+		const ctx = mapCanvas.getContext("2d");
+		const viewport = new Viewport(mapCanvas);
+		var fpath = null;
 
-			// Compute bounding box
-			let latMin = Infinity,
-				latMax = -Infinity;
-			let lonMin = Infinity,
-				lonMax = -Infinity;
-			graph.points.forEach((p) => {
-				if (p.lat < latMin) latMin = p.lat;
-				if (p.lat > latMax) latMax = p.lat;
-				if (p.lon < lonMin) lonMin = p.lon;
-				if (p.lon > lonMax) lonMax = p.lon;
-			});
-			viewport.autoFit(latMin, latMax, lonMin, lonMax);
+		const loader = new OsmLoader();
+		const graph = await loader.load();
+		var startCoords;
+		var endCoords;
 
-			function render() {
-				ctx.clearRect(0, 0, mapCanvas.width, mapCanvas.height);
-				graph.draw(ctx, viewport);
-				if (fpath){ fpath.draw(ctx, viewport); }
-				
+		// Compute bounding box
+		let latMin = Infinity,
+			latMax = -Infinity;
+		let lonMin = Infinity,
+			lonMax = -Infinity;
+		graph.points.forEach((p) => {
+			if (p.lat < latMin) latMin = p.lat;
+			if (p.lat > latMax) latMax = p.lat;
+			if (p.lon < lonMin) lonMin = p.lon;
+			if (p.lon > lonMax) lonMax = p.lon;
+		});
+		viewport.autoFit(latMin, latMax, lonMin, lonMax);
+
+		function render() {
+			ctx.clearRect(0, 0, mapCanvas.width, mapCanvas.height);
+			graph.draw(ctx, viewport);
+			if (fpath) { fpath.draw(ctx, viewport); }
+
+		}
+		render();
+
+		// Mouse events for panning
+		let isDragging = false;
+		let lastX = 0,
+			lastY = 0;
+
+		mapCanvas.addEventListener("mousedown", (e) => {
+			isDragging = true;
+			lastX = e.clientX;
+			lastY = e.clientY;
+		});
+
+		mapCanvas.addEventListener("mousemove", (e) => {
+			if (!isDragging) return;
+			const dx = e.clientX - lastX;
+			const dy = e.clientY - lastY;
+			viewport.pan(dx, dy);
+			lastX = e.clientX;
+			lastY = e.clientY;
+			render();
+		});
+
+		mapCanvas.addEventListener("mouseup", () => (isDragging = false));
+
+		// Wheel event for zoom
+		mapCanvas.addEventListener(
+			"wheel",
+			(e) => {
+				e.preventDefault();
+				const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
+				viewport.zoom(zoomFactor);
+				render();
+			},
+			{ passive: false }
+		);
+
+		// Keyboard events for panning and zoom
+		document.addEventListener("keydown", (e) => {
+			switch (e.key) {
+				case "ArrowUp":
+					viewport.pan(0, 10);
+					break;
+				case "ArrowDown":
+					viewport.pan(0, -10);
+					break;
+				case "ArrowLeft":
+					viewport.pan(10, 0);
+					break;
+				case "ArrowRight":
+					viewport.pan(-10, 0);
+					break;
+				case "+":
+					viewport.zoom(1.1);
+					break;
+				case "-":
+					viewport.zoom(0.9);
+					break;
+				default:
+					return;
 			}
 			render();
-
-			// Mouse events for panning
-			let isDragging = false;
-			let lastX = 0,
-				lastY = 0;
-
-			mapCanvas.addEventListener("mousedown", (e) => {
-				isDragging = true;
-				lastX = e.clientX;
-				lastY = e.clientY;
-			});
-
-			mapCanvas.addEventListener("mousemove", (e) => {
-				if (!isDragging) return;
-				const dx = e.clientX - lastX;
-				const dy = e.clientY - lastY;
-				viewport.pan(dx, dy);
-				lastX = e.clientX;
-				lastY = e.clientY;
-				render();
-			});
-
-			mapCanvas.addEventListener("mouseup", () => (isDragging = false));
-
-			// Wheel event for zoom
-			mapCanvas.addEventListener(
-				"wheel",
-				(e) => {
-					e.preventDefault();
-					const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
-					viewport.zoom(zoomFactor);
-					render();
-				},
-				{ passive: false }
-			);
-
-			// Keyboard events for panning and zoom
-			document.addEventListener("keydown", (e) => {
-				switch (e.key) {
-					case "ArrowUp":
-						viewport.pan(0, 10);
-						break;
-					case "ArrowDown":
-						viewport.pan(0, -10);
-						break;
-					case "ArrowLeft":
-						viewport.pan(10, 0);
-						break;
-					case "ArrowRight":
-						viewport.pan(-10, 0);
-						break;
-					case "+":
-						viewport.zoom(1.1);
-						break;
-					case "-":
-						viewport.zoom(0.9);
-						break;
-					default:
-						return;
-				}
-				render();
-			});
-			/*
-			const aStarButton = document.getElementById("aStar");
-			aStarButton.addEventListener("click", () => {
-				//get random points as start and end
-				const start = graph.points[Math.floor(Math.random() * graph.points.length)];
-				const end = graph.points[Math.floor(Math.random() * graph.points.length)];
-				const astar = new aStar(graph, start, end);
-				console.log("Running A* from", start, "to", end);
-				fpath = new path(astar.run(), "red");
-				console.log("Path found", fpath);
-				render();
-			});
-			const djikstraButton = document.getElementById("Djikstra");
-			djikstraButton.addEventListener("click", () => {
-				//get random points as start and end
-				const start = graph.points[Math.floor(Math.random() * graph.points.length)];
-				const end = graph.points[Math.floor(Math.random() * graph.points.length)];
+		});
+		/*
+		const aStarButton = document.getElementById("aStar");
+		aStarButton.addEventListener("click", () => {
+			//get random points as start and end
+			const start = graph.points[Math.floor(Math.random() * graph.points.length)];
+			const end = graph.points[Math.floor(Math.random() * graph.points.length)];
+			const astar = new aStar(graph, start, end);
+			console.log("Running A* from", start, "to", end);
+			fpath = new path(astar.run(), "red");
+			console.log("Path found", fpath);
+			render();
+		});
+		const djikstraButton = document.getElementById("Djikstra");
+		djikstraButton.addEventListener("click", () => {
+			//get random points as start and end
+			const start = graph.points[Math.floor(Math.random() * graph.points.length)];
+			const end = graph.points[Math.floor(Math.random() * graph.points.length)];
 	
-				const djikstra = new Djikstra(graph, start, end);
-				console.log("Running djikstra from", start, "to", end);
-				const pathPoints = djikstra.run();
-				console.log("Djikstra path points:", pathPoints); // Add debugging here
-				fpath = new path(pathPoints, "blue");
-				console.log("Path found", fpath);
-				render();
-			});*/
-			const runButton = document.getElementById("Run");
-			runButton.addEventListener("click", () => {
-				//make the start and end coords snap to the nearest point
-				const startpoint = graph.placePointOnEdge(startCoords.y, startCoords.x);
-				const endpoint = graph.placePointOnEdge(endCoords.y, endCoords.x);
-
-				
-				const pathfinding = new PathFinding(graph, startpoint, endpoint);
-				console.log("Running PathFinding from", startpoint, "to", endpoint);
-				
-				const result = pathfinding.run();
-				const pathPoints = result.bestPath;
-				const algo = result.algorithm;
-				console.log("Pathfinding algorithm used:", algo);
-				console.log("PathFinding path points:", pathPoints);
+			const djikstra = new Djikstra(graph, start, end);
+			console.log("Running djikstra from", start, "to", end);
+			const pathPoints = djikstra.run();
+			console.log("Djikstra path points:", pathPoints); // Add debugging here
+			fpath = new path(pathPoints, "blue");
+			console.log("Path found", fpath);
+			render();
+		});*/
+		const runButton = document.getElementById("Run");
+		runButton.addEventListener("click", () => {
+			//make the start and end coords snap to the nearest point
+			const startpoint = graph.placePointOnEdge(startCoords.y, startCoords.x);
+			const endpoint = graph.placePointOnEdge(endCoords.y, endCoords.x);
 
 
-				//console.log("PathFinding path points:", pathPoints); // Add debugging here
-				fpath = new path(pathPoints, "red");
-				
-				
-				render();
-			});
-			const lookUpButton = document.getElementById("lookUp");
-			lookUpButton.addEventListener("click", async () => {
-				const start = document.getElementById("start").value;
-				const end = document.getElementById("end").value;
-				const geocoder = new geoCoder();
-				try{
-					startCoords = await geocoder.run(start);
-					endCoords = await geocoder.run(end);
-					console.log("Start Coords:", startCoords);
-					console.log("End Coords:", endCoords);
-				}
-				catch(e){
-					console.log("Error:", e);
-				}
+			const pathfinding = new PathFinding(graph, startpoint, endpoint);
+			console.log("Running PathFinding from", startpoint, "to", endpoint);
+
+			const result = pathfinding.run();
+			const pathPoints = result.bestPath;
+			const algo = result.algorithm;
+			console.log("Pathfinding algorithm used:", algo);
+			console.log("PathFinding path points:", pathPoints);
 
 
-				//console.log("PathFinding path points:", pathPoints); // Add debugging here
-				//fpath = new path(pathPoints, "red");
-				render();
-			});
-		</script>
-	</body>
+			//console.log("PathFinding path points:", pathPoints); // Add debugging here
+			fpath = new path(pathPoints, "red");
+
+
+			render();
+		});
+		const lookUpButton = document.getElementById("lookUp");
+		lookUpButton.addEventListener("click", async () => {
+			const start = document.getElementById("start").value;
+			const end = document.getElementById("end").value;
+			const geocoder = new geoCoder();
+			try {
+				startCoords = await geocoder.run(start);
+				endCoords = await geocoder.run(end);
+				console.log("Start Coords:", startCoords);
+				console.log("End Coords:", endCoords);
+			}
+			catch (e) {
+				console.log("Error:", e);
+			}
+
+
+			//console.log("PathFinding path points:", pathPoints); // Add debugging here
+			//fpath = new path(pathPoints, "red");
+			render();
+		});
+	</script>
+</body>
+
 </html>

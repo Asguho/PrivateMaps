@@ -42,7 +42,7 @@ export class Graph {
 
     placePointOnEdge(lat, lon) {
         const {edge, closest} = this.nearestEdge(lat, lon);
-        console.log(edge);
+        //console.log(edge);
         const { point1, point2 } = edge;
 
 /*         const t = ((x - x1) * (x2 - x1) + (y - y1) * (y2 - y1)) / ((x2 - x1) ** 2 + (y2 - y1) ** 2);
@@ -51,7 +51,7 @@ export class Graph {
         const y0 = y1 + clampedT * (y2 - y1); */
 
         const newPoint = new Point(this.points.length + 1, closest.y, closest.x);
-        console.log(newPoint);
+        //console.log(newPoint);
         this.addPoint(newPoint);
 
         // Remove the original ed

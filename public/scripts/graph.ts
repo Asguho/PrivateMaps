@@ -35,7 +35,7 @@ export class Graph {
         { y: point1.lat, x: point1.lon },
         { y: point2.lat, x: point2.lon }
       );
-      console.log(`Edge: ${edge}, Distance: ${distance}, isCarAllowed: ${edge.isCarAllowed}`);
+      //console.log(`Edge: ${edge}, Distance: ${distance}, isCarAllowed: ${edge.isCarAllowed}`);
       if (distance < nearestDistance && edge.isCarAllowed) {
         nearestDistance = distance;
         nearestEdge = edge;

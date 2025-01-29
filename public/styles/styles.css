@@ -1,4 +1,42 @@
 body {
 	margin: 0;
 	padding: 0;
+	font-family: Arial, sans-serif;
+	overflow: hidden; /* Prevent page overflow */
+}
+
+.controls {
+	position: absolute;
+	top: 10px;
+	left: 10px;
+	width: 250px;
+	background: rgba(255, 255, 255, 0.9);
+	padding: 10px;
+	border-radius: 5px;
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.controls button,
+.controls input {
+	display: block;
+	width: 100%;
+	margin-bottom: 10px;
+	padding: 10px;
+	border: 1px solid #ccc;
+	border-radius: 5px;
+	font-size: 14px;
+}
+
+.controls input {
+	width: calc(100% - 22px); /* Adjusted width to prevent overflow */
+}
+
+.controls button {
+	background-color: #4285f4;
+	color: white;
+	cursor: pointer;
+}
+
+.controls button:hover {
+	background-color: #357ae8;
 }

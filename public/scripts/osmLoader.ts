@@ -1,5 +1,5 @@
 import { Point } from './point.ts';
-import { Edge } from './edge.js';
+import { Edge } from './edge.ts';
 import { Graph } from './graph.ts';
 
 export class OsmLoader {
@@ -55,7 +55,11 @@ out geom;
         for (let i = 0; i < element.nodes.length - 1; i++) {
           const from = this.points.find((point) => point.id === element.nodes[i]);
           const to = this.points.find((point) => point.id === element.nodes[i + 1]);
-          this.edges.push(new Edge(from, to, element.tags.highway, element.tags.maxspeed));
+          if (!from || !to) {
+            console.log('Missing point');
+            continue;
+          }
+          this.edges.push(new Edge(from, to, element.tags.highway, element.tags.maxspeed, element.tags.name));
         }
       }
     }

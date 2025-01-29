@@ -24,21 +24,21 @@ export class Djikstra extends Algo {
     });
   }
 
-  addOpen(node) {
+  addOpen(node: DjikstraNode) {
     this.openList.insert(node);
-    this.openSet.set(node.state.id, node); // Track node in Map for quick lookup
+    this.openSet.set(new Point(node.id, node.lat, node.lon), node); // Track node in Map for quick lookup
   }
 
-  addClosed(node) {
-    this.closedList.add(node.state.id);
+  addClosed(state: Point) {
+    this.closedList.add(state);
   }
 
-  isInClosed(state) {
-    return this.closedList.has(state.id);
+  isInClosed(state: Point) {
+    return this.closedList.has(state);
   }
 
-  isInOpen(state) {
-    return this.openSet.has(state.id);
+  isInOpen(state: Point) {
+    return this.openSet.has(state);
   }
 
   run() {

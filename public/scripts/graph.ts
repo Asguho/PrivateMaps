@@ -1,11 +1,11 @@
 import { Point } from './point.ts';
-import { Edge } from './edge.js';
+import { Edge } from './edge.ts';
 import { Viewport } from './viewport.ts';
 
 export class Graph {
   points: Point[];
   edges: Edge[];
-  constructor(points = [], edges = []) {
+  constructor(points: Point[] = [], edges: Edge[] = []) {
     this.points = points;
     this.edges = edges;
   }
@@ -14,7 +14,7 @@ export class Graph {
     this.points.push(point);
   }
 
-  addEdge(edge: Point) {
+  addEdge(edge: Edge) {
     this.edges.push(edge);
   }
 
@@ -30,12 +30,12 @@ export class Graph {
 
     this.edges.forEach((edge) => {
       const { point1, point2 } = edge;
-      let { closest, distance } = this.distanceToSegment(
+      const { closest, distance } = this.distanceToSegment(
         { y: lat, x: lon },
         { y: point1.lat, x: point1.lon },
         { y: point2.lat, x: point2.lon }
       );
-      //console.log(distance);
+      console.log(`Edge: ${edge}, Distance: ${distance}, isCarAllowed: ${edge.isCarAllowed}`);
       if (distance < nearestDistance && edge.isCarAllowed) {
         nearestDistance = distance;
         nearestEdge = edge;
@@ -60,12 +60,9 @@ export class Graph {
     console.log(newPoint);
     this.addPoint(newPoint);
 
-    // Remove the original ed
-    //
-    // ge and add two new edges
     this.edges = this.edges.filter((e) => e !== edge);
-    this.addEdge(new Edge(point1, newPoint, edge.type, edge.maxspeed, edge.streetName));
-    this.addEdge(new Edge(newPoint, point2, edge.type, edge.maxspeed, edge.streetName));
+    this.addEdge(new Edge(point1, newPoint, edge.type, edge.maxSpeed, edge.streetName));
+    this.addEdge(new Edge(newPoint, point2, edge.type, edge.maxSpeed, edge.streetName));
 
     return newPoint;
   }

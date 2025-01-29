@@ -1,29 +1,65 @@
 import { Graph } from './graph.ts';
 import { Point } from './point.ts';
+import { MinHeap } from './minHeap.ts';
+import { Edge } from './edge.ts';
+
+export class Node extends Point {
+  parent: Node | null;
+
+  constructor(point: Point, parent: Node | null) {
+    super(point.id, point.lat, point.lon);
+    this.parent = parent;
+  }
+}
+
+export class AStarNode extends Node {
+  g: number; // The distance from the start node
+  h: number; // The distance to the end node
+  f: number; // The sum of g and h
+
+  constructor(point: Point, parent: Node | null, g: number, h: number) {
+    super(point, parent);
+    this.g = g;
+    this.h = h;
+    this.f = g + h;
+  }
+}
+
+export class DjikstraNode extends Node {
+  g: number; // The distance from the start node
+
+  constructor(point: Point, parent: Node | null, g: number) {
+    super(point, parent);
+    this.g = g;
+  }
+}
 
 export class Algo {
   graph: Graph;
   start: Point;
   end: Point;
-  openSet: Map<number, number>;
-  distances: Map<number, Map<number, number>>;
-  closedList: Set<number>;
+  openSet: Map<Point, Node>;
+  openList: MinHeap;
+  distances: Map<number | null, Map<number | null, number | null>>;
+  closedList: Set<Point>;
+  currentPath: Point[];
 
   constructor(graph: Graph, start: Point, end: Point) {
     this.graph = graph;
     this.start = start;
     this.end = end;
     this.openSet = new Map();
-    this.path = [];
+    this.currentPath = [];
     this.distances = new Map();
     this.closedList = new Set();
+    this.openList = new MinHeap((a, b) => a.f - b.f);
   }
-  distance(node, goal) {
+  distance(node: Point, goal: Point) {
     // Haversine heuristic
     const R = 6371e3;
     const [lat1, lon1] = [node.lat, node.lon];
     const [lat2, lon2] = [goal.lat, goal.lon];
-    const toRadians = (degrees) => (degrees * Math.PI) / 180;
+    const toRadians = (degrees: number) => (degrees * Math.PI) / 180;
     const dLat = toRadians(lat2 - lat1);
     const dLon = toRadians(lon2 - lon1);
     const a =
@@ -34,10 +70,10 @@ export class Algo {
     return R * c;
   }
 
-  reconstructPath(node) {
+  reconstructPath(node: Node | null) {
     const path = [];
     while (node) {
-      const point = node.state ? node.state : node.point; // pisse idiotisk, men det er fordi Djikstra og A* har forskellige node objekter
+      const point = node; // pisse idiotisk, men det er fordi Djikstra og A* har forskellige node objekter
       path.push(point); // Add to the end
       node = node.parent;
     }
@@ -47,21 +83,20 @@ export class Algo {
   openListEmpty() {
     return this.openList.data.length === 0;
   }
-  getNeighbors(point) {
+  getNeighbors(point: Point) {
     return this.graph.edges
       .filter(({ point1, point2, isCarAllowed }) => isCarAllowed && (point1.id === point.id || point2.id === point.id))
       .map(({ point1, point2 }) => (point1.id === point.id ? point2 : point1));
   }
 
   createGraphWithOptimalPath() {
-    const newGraph = { points: [], edges: [] };
-    const pointSet = new Set();
+    const newGraph = new Graph();
+    const pointSet = new Set<Point>();
 
-    for (let i = 0; i < this.path.length - 1; i++) {
-      const point1 = this.path[i];
-      const point2 = this.path[i + 1];
-      const distance = this.getDistance(point1, point2);
-      newGraph.edges.push({ point1, point2, distance });
+    for (let i = 0; i < this.currentPath.length - 1; i++) {
+      const point1: Point = this.currentPath[i];
+      const point2: Point = this.currentPath[i + 1];
+      newGraph.addEdge(new Edge(point1, point2, 'true', 20, 'optimal'));
       pointSet.add(point1);
       pointSet.add(point2);
     }

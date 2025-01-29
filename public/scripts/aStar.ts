@@ -1,19 +1,16 @@
-import { MinHeap } from './minheap.js';
-import { Algo } from './algo.ts';
+import { Algo, AStarNode } from './algo.ts';
 import { Graph } from './graph.ts';
 import { Point } from './point.ts';
 
 export class aStar extends Algo {
-  openList: MinHeap;
   constructor(graph: Graph, start: Point, end: Point) {
     super(graph, start, end);
-    this.openList = new MinHeap((a, b) => a.f - b.f); // MinHeap for efficiency
     this.graph.edges.forEach(({ point1, point2, isCarAllowed }) => {
       if (!this.distances.has(point1.id)) this.distances.set(point1.id, new Map());
       if (!this.distances.has(point2.id)) this.distances.set(point2.id, new Map());
       const calculatedDistance = isCarAllowed ? this.distance(point1, point2) : null;
-      this.distances.get(point1.id).set(point2.id, calculatedDistance);
-      this.distances.get(point2.id).set(point1.id, calculatedDistance);
+      this.distances.get(point1.id)?.set(point2.id, calculatedDistance);
+      this.distances.get(point2.id)?.set(point1.id, calculatedDistance);
     });
   }
 
@@ -21,17 +18,17 @@ export class aStar extends Algo {
     return this.openList.pop();
   }
 
-  addClosed(node) {
-    this.closedList.add(node.point);
+  addClosed(node: Point) {
+    this.closedList.add(node);
   }
 
-  isInClosed(point) {
+  isInClosed(point: Point) {
     return this.closedList.has(point);
   }
 
   run() {
     console.log(this.start, this.end);
-    let startNode = { point: this.start, parent: null, g: 0, f: this.distance(this.start, this.end) };
+    const startNode = new AStarNode(this.start, null, 0, this.distance(this.start, this.end));
     this.openList.insert(startNode);
 
     while (!this.openListEmpty()) {
@@ -40,8 +37,8 @@ export class aStar extends Algo {
       // console.log("Current node:", currentNode);
       // console.log("end:", this.end);
       if (currentNode.point === this.end) {
-        this.path = this.reconstructPath(currentNode);
-        return this.path; // Return the path as an array of points
+        this.currentPath = this.reconstructPath(currentNode);
+        return this.currentPath; // Return the path as an array of points
       }
 
       this.addClosed(currentNode);
@@ -61,15 +58,10 @@ export class aStar extends Algo {
                 console.log("fScore:", fScore);
                 */
 
-        const neighborNode = {
-          point: neighbor,
-          parent: currentNode,
-          g: gScore,
-          h: hScore,
-          f: fScore,
-        };
+        const neighborNode = new AStarNode(neighbor, currentNode, gScore, hScore);
 
-        if (!this.openSet.has(neighbor) || this.openSet.get(neighbor).f > fScore) {
+        const neighborNodeInSet = this.openSet.get(neighbor) as AStarNode;
+        if (!this.openSet.has(neighbor) || (neighborNodeInSet && neighborNodeInSet.f > fScore)) {
           this.openSet.set(neighbor, neighborNode);
           this.openList.insert(neighborNode);
         }
@@ -78,7 +70,7 @@ export class aStar extends Algo {
 
     return null; // No path found
   }
-  getDistance(point1, point2) {
+  getDistance(point1: Point, point2: Point) {
     return this.distances.get(point1.id)?.get(point2.id) || null;
   }
 }

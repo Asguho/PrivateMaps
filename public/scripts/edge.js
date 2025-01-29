@@ -1,5 +1,5 @@
 export class Edge {
-    constructor(point1, point2, type, maxSpeed, streetName) {
+    constructor(point1, point2, type, maxSpeed, streetName, oneway, junction) {
         this.point1 = point1;
         this.point2 = point2;
         this.type = type;
@@ -7,6 +7,9 @@ export class Edge {
         this.maxSpeed = maxSpeed;
         this.color = this.getColorBasedOnType(type);
         this.streetName = streetName;
+        this.oneway = oneway;
+        this.junction = junction;
+        
     }
 
     getColorBasedOnType(type) {

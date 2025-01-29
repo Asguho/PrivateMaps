@@ -39,8 +39,10 @@ export class Algo {
     }
     getNeighbors(point) {
         return this.graph.edges
-            .filter(({ point1, point2, isCarAllowed }) => 
-                isCarAllowed && (point1.id === point.id || point2.id === point.id)
+            .filter(({ point1, point2, isCarAllowed, oneway, junction }) => 
+                isCarAllowed && 
+                (point1.id === point.id || (point2.id === point.id && (!((oneway) || (junction)))))
+
             )
             .map(({ point1, point2 }) => (point1.id === point.id ? point2 : point1));
     }

@@ -29,7 +29,6 @@ export class aStar extends Algo {
 
 
     run() {
-        console.log(this.start, this.end);
         let startNode = { point: this.start, parent: null, g: 0, f: this.distance(this.start, this.end) };
         this.openList.insert(startNode);
         

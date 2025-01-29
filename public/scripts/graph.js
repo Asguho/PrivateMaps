@@ -58,8 +58,8 @@ export class Graph {
         // 
         // ge and add two new edges
         this.edges = this.edges.filter(e => e !== edge);
-        this.addEdge(new Edge(point1, newPoint, edge.type, edge.maxspeed, edge.streetName));
-        this.addEdge(new Edge(newPoint, point2, edge.type, edge.maxspeed, edge.streetName));
+        this.addEdge(new Edge(point1, newPoint, edge.type, edge.maxspeed, edge.streetName, edge.oneway));
+        this.addEdge(new Edge(newPoint, point2, edge.type, edge.maxspeed, edge.streetName, edge.oneway));
 
         return newPoint;
     }

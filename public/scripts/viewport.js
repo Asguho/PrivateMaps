@@ -4,11 +4,13 @@ export class Viewport {
         this.offsetX = 0;
         this.offsetY = 0;
         this.scale = 1;
+        this.baseWidth = 360;
+        this.baseHeight = 180;
     }
 
     geoToCanvas(lat, lon) {
-        const x = ((lon + 180) * (this.canvas.width / 360)) * this.scale + this.offsetX;
-        const y = ((90 - lat) * (this.canvas.height / 180)) * this.scale + this.offsetY;
+        const x = ((lon + 180) / 360) * this.baseWidth * this.scale + this.offsetX;
+        const y = ((90 - lat) / 180) * this.baseHeight * this.scale + this.offsetY;
         return { x, y };
     }
 
@@ -16,6 +18,7 @@ export class Viewport {
         const oldScale = this.scale;
         //logarithmic zoom
         this.scale *= factor;
+        this.scale = Math.max(6000, this.scale);
         const ratio = this.scale / oldScale;
         const centerX = this.canvas.width / 2;
         const centerY = this.canvas.height / 2;
@@ -28,38 +31,43 @@ export class Viewport {
         this.offsetY += dy;
     }
 
-    autoFit(latMin, latMax, lonMin, lonMax) {
-        // Reset scale and offsets
-        this.scale = 1;
-        this.offsetX = 0;
-        this.offsetY = 0;
+    center() {
+        let center = { lat: 0, lon: 0 };
+        center.lat = 90 - (this.offsetY - this.canvas.height / 2) / this.scale / this.baseHeight * 180;
+        center.lon = (this.offsetX - this.canvas.width / 2) / this.scale / this.baseWidth * 360 - 180
+        return center;
+    }
 
-        // Compute base coordinates without current scale/offset
-        const baseX1 = (lonMin + 180) * (this.canvas.width / 360);
-        const baseY1 = (90 - latMax) * (this.canvas.height / 180);
-        const baseX2 = (lonMax + 180) * (this.canvas.width / 360);
-        const baseY2 = (90 - latMin) * (this.canvas.height / 180);
+    size() {
+        return { width: this.canvas.width, height: this.canvas.height };
+    }
 
-        const dataWidth = Math.abs(baseX2 - baseX1);
-        const dataHeight = Math.abs(baseY2 - baseY1);
+    getGeoBounds() {
+        const { width, height } = this.size();
+        const topLeft = this.canvasToGeo(0, 0);
+        const bottomRight = this.canvasToGeo(width, height);
+        return { minLat: bottomRight.lat, maxLat: topLeft.lat, minLon: topLeft.lon, maxLon: bottomRight.lon };
+    }
 
-        // Determine appropriate scale with a small margin (0.8)
-        const scaleX = this.canvas.width / dataWidth;
-        const scaleY = this.canvas.height / dataHeight;
-        this.scale = 0.8 * Math.min(scaleX, scaleY);
+    canvasToGeo(x, y) {
+        const lat = 90 - (y - this.offsetY) / this.scale / this.baseHeight * 180;
+        const lon = (x - this.offsetX) / this.scale / this.baseWidth * 360 - 180;
+        return { lat, lon };
+    }
 
-        // Center the data in the canvas
-        const midX = (baseX1 + baseX2) / 2;
-        const midY = (baseY1 + baseY2) / 2;
-        const canvasMidX = this.canvas.width / 2;
-        const canvasMidY = this.canvas.height / 2;
+    triggerRedraw() {
+        this.canvas.dispatchEvent(new CustomEvent('redraw'));
+    }
 
-        this.offsetX = canvasMidX - this.scale * midX;
-        this.offsetY = canvasMidY - this.scale * midY;
+    print() {
+    }
 
-        //log zoom and pan values
-        console.log("Zoom: " + this.scale);
-        console.log("Pan X: " + this.offsetX);
-        console.log("Pan Y: " + this.offsetY);
+    setScale(scale) {
+        this.scale = scale;
+    }
+
+    setOffset(offsetX, offsetY) {
+        this.offsetX = offsetX;
+        this.offsetY = offsetY;
     }
 }

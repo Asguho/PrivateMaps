@@ -8,7 +8,7 @@ export class OsmLoader {
     this.edges = [];
   }
 
-  async load() {
+  async load(latStart, lonStart, latEnd, lonEnd) {
     const result = await fetch(
       "https://overpass-api.de/api/interpreter",
       {
@@ -20,7 +20,7 @@ export class OsmLoader {
 [out:json][timeout:25];
 // gather results
 (
-  way["highway"](55.729562,12.490795,55.746360,12.515606);
+  way["highway"](${latStart},${lonStart},${latEnd},${lonEnd});
 );
 // print results
 out geom;
@@ -29,7 +29,6 @@ out geom;
     ).then(
       (data) => data.json()
     )
-    console.log(JSON.stringify(result, null, 2))
 
     // Create points
     for (const element of result.elements) {
@@ -60,9 +59,6 @@ out geom;
         }
       }
     }
-
-    console.log(this.points, this.edges);
-
     return new Graph(this.points, this.edges);
   }
 }

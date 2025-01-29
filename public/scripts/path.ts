@@ -25,4 +25,7 @@ export class Path {
       ctx.stroke();
     }
   }
+  size(): number {
+    return this.points.length;
+  }
 }

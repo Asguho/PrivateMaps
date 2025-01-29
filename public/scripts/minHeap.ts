@@ -1,53 +1,70 @@
-export class MinHeap {
-  data: any;
-  compare: (a: any, b: any) => number;
-  constructor(compare: (a: any, b: any) => number) {
-    this.data = [];
-    this.compare = compare;
+export class MinHeap<T> {
+  heap: T[];
+  private comparator: (a: T, b: T) => number;
+
+  constructor(comparator: (a: T, b: T) => number) {
+      this.heap = [];
+      this.comparator = comparator;
   }
 
-  insert(value: any) {
-    this.data.push(value);
-    this.bubbleUp(this.data.length - 1);
+  insert(value: T) {
+      this.heap.push(value);
+      this.bubbleUp(this.heap.length - 1);
   }
 
-  pop() {
-    if (this.data.length === 1) return this.data.pop();
-    const root = this.data[0];
-    this.data[0] = this.data.pop();
-    this.bubbleDown(0);
-    return root;
-  }
-
-  isEmpty() {
-    return this.data.length === 0;
-  }
-
-  bubbleUp(index: number) {
-    while (index > 0) {
-      const parentIndex = Math.floor((index - 1) / 2);
-      if (this.compare(this.data[index], this.data[parentIndex]) >= 0) break;
-      [this.data[index], this.data[parentIndex]] = [this.data[parentIndex], this.data[index]];
-      index = parentIndex;
-    }
-  }
-
-  bubbleDown(index: number) {
-    const length = this.data.length;
-    while (true) {
-      const left = 2 * index + 1;
-      const right = 2 * index + 2;
-      let smallest = index;
-
-      if (left < length && this.compare(this.data[left], this.data[smallest]) < 0) {
-        smallest = left;
+  pop(): T | undefined {
+      if (this.heap.length === 0) return undefined;
+      const poppedValue = this.heap[0];
+      const bottom = this.heap.pop();
+      if (this.heap.length > 0 && bottom !== undefined) {
+          this.heap[0] = bottom;
+          this.bubbleDown(0);
       }
-      if (right < length && this.compare(this.data[right], this.data[smallest]) < 0) {
-        smallest = right;
+      return poppedValue;
+  }
+
+  private bubbleUp(index) {
+      while (index > 0) {
+          const parentIndex = Math.floor((index - 1) / 2);
+          if (this.comparator(this.heap[index], this.heap[parentIndex]) >= 0) break;
+          [this.heap[index], this.heap[parentIndex]] = [this.heap[parentIndex], this.heap[index]];
+          index = parentIndex;
       }
-      if (smallest === index) break;
-      [this.data[index], this.data[smallest]] = [this.data[smallest], this.data[index]];
-      index = smallest;
-    }
+  }
+
+  private bubbleDown(index) {
+      const length = this.heap.length;
+      const element = this.heap[0];
+      while (true) {
+          const leftChildIndex = 2 * index + 1;
+          const rightChildIndex = 2 * index + 2;
+          let leftChild: T | undefined, rightChild: T | undefined;
+          let swapIndex = -1;
+
+          if (leftChildIndex < length) {
+              leftChild = this.heap[leftChildIndex];
+              if (this.comparator(leftChild, element) < 0) {
+                  swapIndex = leftChildIndex;
+              }
+          }
+
+          if (rightChildIndex < length) {
+              rightChild = this.heap[rightChildIndex];
+              if (
+                  (swapIndex === -1 && this.comparator(rightChild, element) < 0) ||
+                  (swapIndex !== -1 && this.comparator(rightChild, leftChild!) < 0)
+              ) {
+                  swapIndex = rightChildIndex;
+              }
+          }
+
+          if (swapIndex === -1) break;
+          [this.heap[index], this.heap[swapIndex]] = [this.heap[swapIndex], this.heap[index]];
+          index = swapIndex;
+      }
+  }
+
+  isEmpty(): boolean {
+      return this.heap.length === 0;
   }
 }

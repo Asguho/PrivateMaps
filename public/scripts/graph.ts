@@ -24,9 +24,9 @@ export class Graph {
   }
 
   nearestEdge(lat: number, lon: number) {
-    let nearestEdge = null;
+    let nearestEdge: Edge | null = null;
     let nearestDistance = Infinity;
-    let closestPoint = null;
+    let closestPoint: { x: number; y: number; } | null = null;
 
     this.edges.forEach((edge) => {
       const { point1, point2 } = edge;
@@ -102,4 +102,5 @@ export class Graph {
 
     return { closest, distance: Math.sqrt(dx * dx + dy * dy) };
   }
+
 }

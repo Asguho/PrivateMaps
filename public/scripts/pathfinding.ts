@@ -15,12 +15,12 @@ export class PathFinding {
     this.graph = graph;
     this.start = start;
     this.end = end;
-    this.aStar = new aStar(graph, start, end);
-    this.djikstra = new Djikstra(graph, start, end);
+    
   }
   calculateTotalDistance(path: Path, distances: Map<number | null, Map<number | null, number | null>>) {
+    console.log("Path:", path);
     let totalDistance = 0;
-    for (let i = 0; i < path.points.length - 1; i++) {
+    for (let i = 0; i < path.size() - 1; i++) {
       const point1 = path.points[i];
       const point2 = path.points[i + 1];
       const distance = distances.get(point1.id)?.get(point2.id) || 0;
@@ -30,7 +30,8 @@ export class PathFinding {
   }
 
   run() {
-    //når turene bliver længere bør det overvejes om der skal favoriseres A* fremfor djikstra pga. compute tid
+    this.aStar = new aStar(this.graph, this.start, this.end);
+    this.djikstra = new Djikstra(this.graph, this.start, this.end);
     const aStarPath = this.aStar.run();
     const djikstraPath = this.djikstra.run();
     /*
@@ -39,14 +40,15 @@ export class PathFinding {
         console.log("A* distances:", this.aStar.distances);
         console.log("Djikstra distances:", this.djikstra.distances);
         */
-
-    const aStarDistance = this.calculateTotalDistance(aStarPath as unknown as Path, this.aStar.distances);
-    const djikstraDistance = this.calculateTotalDistance(djikstraPath as unknown as Path, this.djikstra.distances);
+    const aStarDistance = this.calculateTotalDistance(aStarPath as Path, this.aStar.distances);
+    const djikstraDistance = this.calculateTotalDistance(djikstraPath as Path, this.djikstra.distances);
     console.log(`A* distance: ${aStarDistance}, Djikstra distance: ${djikstraDistance}`);
+
     if (aStarDistance <= djikstraDistance) {
       return { bestPath: aStarPath, algorithm: 'A*' };
     } else {
       return { bestPath: djikstraPath, algorithm: 'Djikstra' };
     }
   }
+  
 }

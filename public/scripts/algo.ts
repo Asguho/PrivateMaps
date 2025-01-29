@@ -2,6 +2,7 @@ import { Graph } from './graph.ts';
 import { Point } from './point.ts';
 import { MinHeap } from './minHeap.ts';
 import { Edge } from './edge.ts';
+import { Path } from './path.ts';
 
 export class Node extends Point {
   parent: Node | null;
@@ -17,7 +18,7 @@ export class AStarNode extends Node {
   h: number; // The distance to the end node
   f: number; // The sum of g and h
 
-  constructor(point: Point, parent: Node | null, g: number, h: number) {
+  constructor(point: Point, parent: Node | null, g: number, h: number, f: number) {
     super(point, parent);
     this.g = g;
     this.h = h;
@@ -38,21 +39,22 @@ export class Algo {
   graph: Graph;
   start: Point;
   end: Point;
-  openSet: Map<Point, Node>;
-  openList: MinHeap;
+  openSet: Map<number, Node>;
   distances: Map<number | null, Map<number | null, number | null>>;
   closedList: Set<Point>;
-  currentPath: Point[];
+  currentPath: Path;
+
 
   constructor(graph: Graph, start: Point, end: Point) {
     this.graph = graph;
     this.start = start;
     this.end = end;
     this.openSet = new Map();
-    this.currentPath = [];
+    this.currentPath;
     this.distances = new Map();
     this.closedList = new Set();
-    this.openList = new MinHeap((a, b) => a.f - b.f);
+
+    
   }
   distance(node: Point, goal: Point) {
     // Haversine heuristic
@@ -66,34 +68,35 @@ export class Algo {
       Math.sin(dLat / 2) * Math.sin(dLat / 2) +
       Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
+    if (isNaN(R * c)) console.log('Distance:', R * c)
     return R * c;
   }
 
   reconstructPath(node: Node | null) {
-    const path = [];
+    const path: Node[] = [];
     while (node) {
-      const point = node; // pisse idiotisk, men det er fordi Djikstra og A* har forskellige node objekter
-      path.push(point); // Add to the end
+      path.push(node); // Add to the end
       node = node.parent;
     }
-    return path.reverse(); // Reverse the array once
+    const finalpath = new Path(path.reverse(), "red"); // Reverse the array once
+    return finalpath;
   }
 
-  openListEmpty() {
-    return this.openList.data.length === 0;
-  }
+
+
   getNeighbors(point: Point) {
     return this.graph.edges
-      .filter(({ point1, point2, isCarAllowed }) => isCarAllowed && (point1.id === point.id || point2.id === point.id))
-      .map(({ point1, point2 }) => (point1.id === point.id ? point2 : point1));
-  }
+        .filter(({ point1, point2, isCarAllowed }) => 
+            isCarAllowed && (point1.id === point.id || point2.id === point.id)
+        )
+        .map(({ point1, point2 }) => (point1.id === point.id ? point2 : point1));
+}
 
   createGraphWithOptimalPath() {
     const newGraph = new Graph();
     const pointSet = new Set<Point>();
 
-    for (let i = 0; i < this.currentPath.length - 1; i++) {
+    for (let i = 0; i < this.currentPath.size() - 1; i++) {
       const point1: Point = this.currentPath[i];
       const point2: Point = this.currentPath[i + 1];
       newGraph.addEdge(new Edge(point1, point2, 'true', 20, 'optimal'));

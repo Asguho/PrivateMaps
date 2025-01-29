@@ -22,4 +22,7 @@ export class Point {
     ctx.fillStyle = 'black';
     ctx.fill();
   }
+  equals(other: Point): boolean {
+    return this.id === other.id && this.lat === other.lat && this.lon === other.lon;
+  }
 }

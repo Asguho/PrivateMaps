@@ -1,11 +1,20 @@
 import { Algo, AStarNode } from './algo.ts';
 import { Graph } from './graph.ts';
 import { Point } from './point.ts';
+import { MinHeap } from './minHeap.ts';
 
 export class aStar extends Algo {
+  openList: MinHeap<AStarNode>;
   constructor(graph: Graph, start: Point, end: Point) {
     super(graph, start, end);
+    this.openList = new MinHeap<AStarNode>((a, b) => {
+      if (a.f === b.f) {
+        return a.h - b.h; // Use h as a tie-breaker
+      }
+      return a.f - b.f;
+    });
     this.graph.edges.forEach(({ point1, point2, isCarAllowed }) => {
+
       if (!this.distances.has(point1.id)) this.distances.set(point1.id, new Map());
       if (!this.distances.has(point2.id)) this.distances.set(point2.id, new Map());
       const calculatedDistance = isCarAllowed ? this.distance(point1, point2) : null;
@@ -28,28 +37,39 @@ export class aStar extends Algo {
 
   run() {
     console.log(this.start, this.end);
-    const startNode = new AStarNode(this.start, null, 0, this.distance(this.start, this.end));
+    const startNode = new AStarNode(this.start, null, 0, 0, this.distance(this.start, this.end));
     this.openList.insert(startNode);
+    console.log("Start node:", startNode.f === startNode.g + startNode.h);
+    while (!this.openList.isEmpty()) {
 
-    while (!this.openListEmpty()) {
       // console.log("Current openList empty:", this.openListEmpty());
       const currentNode = this.popOpen();
       // console.log("Current node:", currentNode);
       // console.log("end:", this.end);
-      if (currentNode.point === this.end) {
+      if (!currentNode) {
+        continue;
+      }
+
+      if (currentNode.equals(this.end)) {
         this.currentPath = this.reconstructPath(currentNode);
         return this.currentPath; // Return the path as an array of points
       }
 
       this.addClosed(currentNode);
 
-      const neighbors = this.getNeighbors(currentNode.point);
+      const neighbors = this.getNeighbors(currentNode);
       // console.log("Neighbors:", neighbors);
 
       for (const neighbor of neighbors) {
         if (this.isInClosed(neighbor)) continue;
 
-        const gScore = currentNode.g + this.getDistance(currentNode.point, neighbor);
+        const distance = this.getDistance(currentNode, neighbor);
+        
+        if (distance === null) {
+          console.log("Distance is null between: " + currentNode.id + " and " + neighbor.id);
+          continue;
+        }
+        const gScore = (currentNode as AStarNode).g + distance;
         const hScore = this.distance(neighbor, this.end);
         const fScore = gScore + hScore + 0.001 * hScore;
         /*
@@ -58,19 +78,20 @@ export class aStar extends Algo {
                 console.log("fScore:", fScore);
                 */
 
-        const neighborNode = new AStarNode(neighbor, currentNode, gScore, hScore);
+        const neighborNode = new AStarNode(neighbor, currentNode, gScore, hScore, fScore);
 
-        const neighborNodeInSet = this.openSet.get(neighbor) as AStarNode;
-        if (!this.openSet.has(neighbor) || (neighborNodeInSet && neighborNodeInSet.f > fScore)) {
-          this.openSet.set(neighbor, neighborNode);
-          this.openList.insert(neighborNode);
+        const neighborNodeInSet = this.openSet.get(neighbor.id) as AStarNode;
+        if (!neighborNodeInSet || neighborNodeInSet.f > fScore) {
+          this.openSet.set(neighbor.id, neighborNode);  // Update the openSet
+          this.openList.insert(neighborNode);           // Insert into the priority queue
         }
       }
     }
 
     return null; // No path found
   }
-  getDistance(point1: Point, point2: Point) {
+  getDistance(point1: Point, point2: Point): number | null {
     return this.distances.get(point1.id)?.get(point2.id) || null;
   }
+  
 }

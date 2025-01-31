@@ -54,7 +54,7 @@ export class Algo {
     this.distances = new Map();
     this.closedList = new Set();
 
-    
+
   }
   distance(node: Point, goal: Point) {
     // Haversine heuristic
@@ -86,12 +86,12 @@ export class Algo {
 
   getNeighbors(point: Point) {
     return this.graph.edges
-        .filter(({ point1, point2, isCarAllowed, oneway, junction }) => 
-          isCarAllowed && 
+      .filter(({ point1, point2, isCarAllowed, oneway, junction }) =>
+        isCarAllowed &&
         (point1.id === point.id || (point2.id === point.id && (!((oneway) || (junction)))))
-        )
-        .map(({ point1, point2 }) => (point1.id === point.id ? point2 : point1));
-}
+      )
+      .map(({ point1, point2 }) => (point1.id === point.id ? point2 : point1));
+  }
 
   createGraphWithOptimalPath() {
     const newGraph = new Graph();

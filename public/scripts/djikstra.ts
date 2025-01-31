@@ -16,7 +16,7 @@ export class Djikstra extends Algo {
       this.distances.get(point1.id)?.set(point2.id, travelTime);
       this.distances.get(point2.id)?.set(point1.id, travelTime);
     });
-    
+
   }
 
   addOpen(node: DjikstraNode) {
@@ -39,29 +39,29 @@ export class Djikstra extends Algo {
   run() {
     const startNode = new DjikstraNode(this.start, null, 0);
     this.addOpen(startNode);
-  
+
     while (!this.openList.isEmpty()) {
       const currentNode = this.openList.pop();
       if (!currentNode) {
         return null; // If no node is returned, break out of the loop
       }
-  
+
       // If we reach the destination, reconstruct the path
       if (currentNode.equals(this.end)) {
         this.currentPath = this.reconstructPath(currentNode);
         return this.currentPath; // Return the path as an array of points
       }
-  
+
       // Mark current node as visited
       this.addClosed(currentNode);
-  
+
       const neighbors = this.getNeighbors(currentNode);
       for (const neighbor of neighbors) {
         if (this.isInClosed(neighbor)) continue;
-  
+
         const g = (currentNode as DjikstraNode).g + this.getDistance(currentNode, neighbor);
         const neighborNode = new DjikstraNode(neighbor, currentNode, g);
-  
+
         // If the neighbor is already in the open list, check if the new g is better
         if (this.isInOpen(neighborNode)) {
           const existingNode = this.openSet.get(neighborNode.id) as DjikstraNode;
@@ -71,7 +71,7 @@ export class Djikstra extends Algo {
             existingNode.parent = currentNode;
 
             this.openList.heap = this.openList.heap.filter(node => node !== existingNode);
-  
+
             // Remove the old node and insert the updated one
             this.openList.insert(existingNode); // Re-insert the updated node
           }
@@ -81,10 +81,10 @@ export class Djikstra extends Algo {
         }
       }
     }
-  
+
     return null; // If no path found
   }
-  
+
   getDistance(point1: Point, point2: Point) {
     return this.distances.get(point1.id)?.get(point2.id) ?? Infinity;
   }

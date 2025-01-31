@@ -10,29 +10,31 @@ export class OsmLoader {
     this.edges = [];
   }
 
-  async load() {
-    const result = await fetch('https://overpass-api.de/api/interpreter', {
-      method: 'POST',
-      // The body contains the query
-      // to understand the query language see "The Programmatic Query Language" on
-      // https://wiki.openstreetmap.org/wiki/Overpass_API#The_Programmatic_Query_Language_(OverpassQL)
-      body:
-        'data=' +
-        encodeURIComponent(`
+  async load(latStart: number, lonStart: number, latEnd: number, lonEnd: number) {
+    const result = await fetch(
+      "https://overpass-api.de/api/interpreter",
+      {
+        method: "POST",
+        // The body contains the query
+        // to understand the query language see "The Programmatic Query Language" on
+        // https://wiki.openstreetmap.org/wiki/Overpass_API#The_Programmatic_Query_Language_(OverpassQL)
+        body: "data=" + encodeURIComponent(`
 [out:json][timeout:25];
 // gather results
 (
-  way["highway"](55.729562,12.490795,55.746360,12.515606);
+  way["highway"](${latStart},${lonStart},${latEnd},${lonEnd});
 );
 // print results
 out geom;
-        `),
-    }).then((data) => data.json());
-    console.log(JSON.stringify(result, null, 2));
+        `)
+      },
+    ).then(
+      (data) => data.json()
+    )
 
     // Create points
     for (const element of result.elements) {
-      if (element.type === 'node') {
+      if (element.type === "node") {
         this.points.push(new Point(element.id, element.lat, element.lon));
       }
     }

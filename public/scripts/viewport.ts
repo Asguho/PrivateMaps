@@ -3,12 +3,15 @@ export class Viewport {
   offsetX: number;
   offsetY: number;
   scale: number;
-
+  baseWidth: number;
+  baseHeight: number;
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
     this.offsetX = 0;
     this.offsetY = 0;
     this.scale = 1;
+    this.baseWidth = 360;
+    this.baseHeight = 180;
   }
 
   geoToCanvas(lat: number, lon: number) {
@@ -66,5 +69,26 @@ export class Viewport {
     console.log('Zoom: ' + this.scale);
     console.log('Pan X: ' + this.offsetX);
     console.log('Pan Y: ' + this.offsetY);
+  }
+
+  size() {
+    return { width: this.canvas.width, height: this.canvas.height };
+  }
+
+  getGeoBounds() {
+    const { width, height } = this.size();
+    const topLeft = this.canvasToGeo(0, 0);
+    const bottomRight = this.canvasToGeo(width, height);
+    return { minLat: bottomRight.lat, maxLat: topLeft.lat, minLon: topLeft.lon, maxLon: bottomRight.lon };
+  }
+
+  canvasToGeo(x: number, y: number) {
+    const lat = 90 - (y - this.offsetY) / this.scale / this.baseHeight * 180;
+    const lon = (x - this.offsetX) / this.scale / this.baseWidth * 360 - 180;
+    return { lat, lon };
+  }
+
+  triggerRedraw() {
+    this.canvas.dispatchEvent(new CustomEvent('redraw'));
   }
 }

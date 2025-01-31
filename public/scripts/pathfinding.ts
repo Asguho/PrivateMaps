@@ -17,7 +17,7 @@ export class PathFinding {
     this.end = end;
     
   }
-  calculateTotalDistance(path: Path, distances: Map<number | null, Map<number | null, number | null>>) {
+  calculateTravelTime(path: Path, distances: Map<number | null, Map<number | null, number | null>>) {
     console.log("Path:", path);
     let totalDistance = 0;
     for (let i = 0; i < path.size() - 1; i++) {
@@ -40,15 +40,24 @@ export class PathFinding {
         console.log("A* distances:", this.aStar.distances);
         console.log("Djikstra distances:", this.djikstra.distances);
         */
-    const aStarDistance = this.calculateTotalDistance(aStarPath as Path, this.aStar.distances);
-    const djikstraDistance = this.calculateTotalDistance(djikstraPath as Path, this.djikstra.distances);
-    console.log(`A* distance: ${aStarDistance}, Djikstra distance: ${djikstraDistance}`);
+        if (aStarPath && djikstraPath) {
+            const aStarTime = this.calculateTravelTime(aStarPath, this.aStar.distances);
+            const djikstraTime = this.calculateTravelTime(djikstraPath, this.djikstra.distances);
+            const aStarDistance = aStarPath.calculateTotalDistance();
+            const djikstraDistance = djikstraPath.calculateTotalDistance();
+        console.log(`A* distance: ${aStarDistance}, Djikstra distance: ${djikstraDistance}`);
+        console.log(`A* time: ${aStarTime}, Djikstra time: ${djikstraTime}`);
 
-    if (aStarDistance <= djikstraDistance) {
-      return { bestPath: aStarPath, algorithm: 'A*' };
+        if (aStarDistance <= djikstraDistance) {
+            return { bestPath: aStarPath, algorithm: 'A*' };
+        } else {
+            return { bestPath: djikstraPath, algorithm: 'Djikstra' };
+        }
     } else {
-      return { bestPath: djikstraPath, algorithm: 'Djikstra' };
+        console.error("One of the paths is null");
+        return null;
+    }
     }
   }
-  
-}
+
+

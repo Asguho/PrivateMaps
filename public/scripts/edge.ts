@@ -11,13 +11,13 @@ export class Edge {
   streetName: string;
   oneway: boolean;
   junction: boolean;
-  
+
   constructor(point1: Point, point2: Point, type: string, maxSpeed: number, streetName: string, oneway: boolean, junction: boolean) {
     this.point1 = point1;
     this.point2 = point2;
     this.type = type;
     this.isCarAllowed = this.isCarAllowedBasedOnType(type);
-    this.maxSpeed = maxSpeed;
+    this.maxSpeed = maxSpeed ?? 50;
     this.color = this.getColorBasedOnType(type);
     this.streetName = streetName;
     this.oneway = oneway;

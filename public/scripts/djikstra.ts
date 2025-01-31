@@ -8,12 +8,13 @@ export class Djikstra extends Algo {
   constructor(graph: Graph, start: Point, end: Point) {
     super(graph, start, end);
     this.openList = new MinHeap<DjikstraNode>((a, b) => a.g - b.g);
-    this.graph.edges.forEach(({ point1, point2, isCarAllowed }) => {
+    this.graph.edges.forEach(({ point1, point2, isCarAllowed, maxSpeed }) => {
       if (!this.distances.has(point1.id)) this.distances.set(point1.id, new Map());
       if (!this.distances.has(point2.id)) this.distances.set(point2.id, new Map());
-      const calculatedDistance = isCarAllowed ? this.distance(point1, point2) : Infinity;
-      this.distances.get(point1.id)?.set(point2.id, calculatedDistance);
-      this.distances.get(point2.id)?.set(point1.id, calculatedDistance);
+      const calculatedDistance = this.distance(point1, point2);
+      const travelTime = isCarAllowed && maxSpeed > 0 ? calculatedDistance / (maxSpeed / 3.6) : Infinity;
+      this.distances.get(point1.id)?.set(point2.id, travelTime);
+      this.distances.get(point2.id)?.set(point1.id, travelTime);
     });
     
   }

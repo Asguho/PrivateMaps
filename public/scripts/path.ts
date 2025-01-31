@@ -28,4 +28,28 @@ export class Path {
   size(): number {
     return this.points.length;
   }
+  calculateTotalDistance() {
+    var totalDistance = 0;
+    for (let i = 0; i < this.points.length - 1; i++) {
+        const point1 = this.points[i];
+        const point2 = this.points[i + 1];
+        const dist = this.distance(point1, point2) || null;
+        totalDistance += dist ?? 0;
+    }
+    return totalDistance;
+    
+}
+distance(node, goal) { // Haversine heuristic
+  const R = 6371e3;
+  const [lat1, lon1] = [node.lat, node.lon];
+  const [lat2, lon2] = [goal.lat, goal.lon];
+  const toRadians = (degrees) => degrees * Math.PI / 180;
+  const dLat = toRadians(lat2 - lat1);
+  const dLon = toRadians(lon2 - lon1);
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
 }

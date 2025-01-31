@@ -5,28 +5,18 @@
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 	<title>Private Maps</title>
-	<description>The privacy of OpenStreetMap with the convenience of Google Maps</description>
 	<link rel="stylesheet" href="styles/styles.css" />
 </head>
 
 <body>
-	<h1>Private Maps</h1>
 	<canvas id="mapCanvas"></canvas>
-	<br>
-
-	<!-- find ud af at lave det her smartere-->
-	<button id="Run">find shortest path</button>
-	<br>
-	<textarea id="start" rows="1" cols="50">marienborg alle 10</textarea>
-	<br>
-	<textarea id="end" rows="1" cols="50">vandtårnsvej 32</textarea>
-	<br>
-	<button id="lookUp">Lookup</button>
-
-	<!--
-		<button id = "aStar">Run A*</button>
-		<button id = "Djikstra">Run Djikstra</button>
-		-->
+	<div class="controls">
+		<h1>Private Maps</h1>
+		<button id="Run">Find Shortest Path</button>
+		<input id="start" type="text" placeholder="Enter start location" />
+		<input id="end" type="text" placeholder="Enter end location" />
+		<button id="lookUp">Lookup</button>
+	</div>
 
 	<script type="module">
 		import { Point } from "./scripts/point.ts";
@@ -44,6 +34,12 @@
 		const mapCanvas = document.getElementById("mapCanvas");
 		mapCanvas.width = window.innerWidth;
 		mapCanvas.height = window.innerHeight;
+
+		window.addEventListener("resize", () => {
+			mapCanvas.width = window.innerWidth;
+			mapCanvas.height = window.innerHeight;
+			throttleRender();
+		});
 
 		const ctx = mapCanvas.getContext("2d");
 		const viewport = new Viewport(mapCanvas);

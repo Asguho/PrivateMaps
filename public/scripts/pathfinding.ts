@@ -15,7 +15,7 @@ export class PathFinding {
     this.graph = graph;
     this.start = start;
     this.end = end;
-    
+
   }
   calculateTravelTime(path: Path, distances: Map<number | null, Map<number | null, number | null>>) {
     console.log("Path:", path);
@@ -40,24 +40,24 @@ export class PathFinding {
         console.log("A* distances:", this.aStar.distances);
         console.log("Djikstra distances:", this.djikstra.distances);
         */
-        if (aStarPath && djikstraPath) {
-            const aStarTime = this.calculateTravelTime(aStarPath, this.aStar.distances);
-            const djikstraTime = this.calculateTravelTime(djikstraPath, this.djikstra.distances);
-            const aStarDistance = aStarPath.calculateTotalDistance();
-            const djikstraDistance = djikstraPath.calculateTotalDistance();
-        console.log(`A* distance: ${aStarDistance}, Djikstra distance: ${djikstraDistance}`);
-        console.log(`A* time: ${aStarTime}, Djikstra time: ${djikstraTime}`);
+    if (aStarPath && djikstraPath) {
+      const aStarTime = this.calculateTravelTime(aStarPath, this.aStar.distances);
+      const djikstraTime = this.calculateTravelTime(djikstraPath, this.djikstra.distances);
+      const aStarDistance = aStarPath.calculateTotalDistance();
+      const djikstraDistance = djikstraPath.calculateTotalDistance();
+      console.log(`A* distance: ${aStarDistance}, Djikstra distance: ${djikstraDistance}`);
+      console.log(`A* time: ${aStarTime}, Djikstra time: ${djikstraTime}`);
 
-        if (aStarDistance <= djikstraDistance) {
-            return { bestPath: aStarPath, algorithm: 'A*' };
-        } else {
-            return { bestPath: djikstraPath, algorithm: 'Djikstra' };
-        }
+      if (aStarDistance <= djikstraDistance) {
+        return { bestPath: aStarPath, algorithm: 'A*' };
+      } else {
+        return { bestPath: djikstraPath, algorithm: 'Djikstra' };
+      }
     } else {
-        console.error("One of the paths is null");
-        return null;
-    }
+      console.error("One of the paths is null");
+      return null;
     }
   }
+}
 
 

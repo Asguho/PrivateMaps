@@ -37,7 +37,7 @@ export class aStar extends Algo {
 
   run() {
     console.log(this.start, this.end);
-    const startNode = new AStarNode(this.start, null, 0, 0, this.distance(this.start, this.end));
+    const startNode = new AStarNode(this.start, null, 0, this.distance(this.start, this.end));
     this.openList.insert(startNode);
     console.log("Start node:", startNode.f === startNode.g + startNode.h);
     while (!this.openList.isEmpty()) {
@@ -65,11 +65,8 @@ export class aStar extends Algo {
 
         const distance = this.getDistance(currentNode, neighbor);
         
-        if (distance === null) {
-          console.log("Distance is null between: " + currentNode.id + " and " + neighbor.id);
-          continue;
-        }
-        const gScore = (currentNode as AStarNode).g + distance;
+        
+        const gScore = (currentNode as AStarNode).g + (distance ?? 0);
         const hScore = this.distance(neighbor, this.end);
         const fScore = gScore + hScore + 0.001 * hScore;
         /*
@@ -78,7 +75,7 @@ export class aStar extends Algo {
                 console.log("fScore:", fScore);
                 */
 
-        const neighborNode = new AStarNode(neighbor, currentNode, gScore, hScore, fScore);
+        const neighborNode = new AStarNode(neighbor, currentNode, gScore, hScore);
 
         const neighborNodeInSet = this.openSet.get(neighbor.id) as AStarNode;
         if (!neighborNodeInSet || neighborNodeInSet.f > fScore) {

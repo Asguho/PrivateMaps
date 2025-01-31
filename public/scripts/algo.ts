@@ -18,11 +18,11 @@ export class AStarNode extends Node {
   h: number; // The distance to the end node
   f: number; // The sum of g and h
 
-  constructor(point: Point, parent: Node | null, g: number, h: number, f: number) {
+  constructor(point: Point, parent: Node | null, g: number, h: number) {
     super(point, parent);
     this.g = g;
     this.h = h;
-    this.f = g + h;
+    this.f = this.g + this.h + 0.001 * this.h;
   }
 }
 

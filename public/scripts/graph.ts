@@ -37,10 +37,12 @@ export class Graph {
       );
       //console.log(`Edge: ${edge}, Distance: ${distance}, isCarAllowed: ${edge.isCarAllowed}`);
       if (distance < nearestDistance && edge.isCarAllowed) {
-        nearestDistance = distance;
+        nearestDistance = distance
         nearestEdge = edge;
         closestPoint = closest;
       }
+
+      return { closest, distance };
     });
 
     return { edge: nearestEdge, closest: closestPoint };
@@ -50,7 +52,7 @@ export class Graph {
     const { edge, closest } = this.nearestEdge(lat, lon);
     console.log(edge);
 
-    // @ts-ignore
+    // @ts-ignore edge is not null but wth
     const { point1, point2 } = edge;
 
     /*         const t = ((x - x1) * (x2 - x1) + (y - y1) * (y2 - y1)) / ((x2 - x1) ** 2 + (y2 - y1) ** 2);
@@ -58,15 +60,15 @@ export class Graph {
         const x0 = x1 + clampedT * (x2 - x1);
         const y0 = y1 + clampedT * (y2 - y1); */
 
-    // @ts-ignore
+    // @ts-ignore closest is not null but wth
     const newPoint = new Point(this.points.length + 1, closest.y, closest.x);
     console.log(newPoint);
     this.addPoint(newPoint);
 
     this.edges = this.edges.filter((e) => e !== edge);
-    // @ts-ignore
+    // @ts-ignore edge is not null but wth
     this.addEdge(new Edge(point1, newPoint, edge.type, edge.maxSpeed, edge.streetName, edge.oneway, edge.junction));
-    // @ts-ignore
+    // @ts-ignore edge is not null but wth
     this.addEdge(new Edge(newPoint, point2, edge.type, edge.maxSpeed, edge.streetName, edge.oneway, edge.junction));
 
     return newPoint;
@@ -86,7 +88,7 @@ export class Graph {
     }
 
     // Calculate the parameter t that minimizes the distance.
-    let t = ((pt.x - p1.x) * dx + (pt.y - p1.y) * dy) / (dx * dx + dy * dy);
+    const t = ((pt.x - p1.x) * dx + (pt.y - p1.y) * dy) / (dx * dx + dy * dy);
 
     // Clamp t to the range [0, 1] to ensure the closest point lies on the segment.
     if (t < 0) {

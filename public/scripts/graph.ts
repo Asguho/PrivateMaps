@@ -55,11 +55,6 @@ export class Graph {
     // @ts-ignore edge is not null but wth
     const { point1, point2 } = edge;
 
-    /*         const t = ((x - x1) * (x2 - x1) + (y - y1) * (y2 - y1)) / ((x2 - x1) ** 2 + (y2 - y1) ** 2);
-        const clampedT = Math.max(0, Math.min(1, t));
-        const x0 = x1 + clampedT * (x2 - x1);
-        const y0 = y1 + clampedT * (y2 - y1); */
-
     // @ts-ignore closest is not null but wth
     const newPoint = new Point(this.points.length + 1, closest.y, closest.x);
     console.log(newPoint);
@@ -104,5 +99,4 @@ export class Graph {
 
     return { closest, distance: Math.sqrt(dx * dx + dy * dy) };
   }
-
 }

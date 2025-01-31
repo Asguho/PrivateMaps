@@ -1,3 +1,4 @@
+import { Graph } from "./graph.ts";
 import { Tile } from "./tile.ts";
 import { Viewport } from "./viewport.ts";
 
@@ -33,7 +34,7 @@ export class TileManager {
             }
         }
 
-        
+
 
         console.log(`Amount of tiles rendered: ${amountOfTilesRendered}`);
     }
@@ -78,7 +79,7 @@ export class TileManager {
         }
 
         let amountOfTilesProcessed = 0;
-        for (let tile of this.unloadedTiles) {
+        for (const tile of this.unloadedTiles) {
             const tileKey = `${tile.lat},${tile.lon}`;
             if (!this.tiles.has(tileKey)) {
                 this.loadTileAsync(tile.lat, tile.lon, viewport);
@@ -90,5 +91,26 @@ export class TileManager {
         const end = new Date().getTime();
         console.log(`Determine tiles in view = ${amountOfTilesProcessed}: ${end - start}ms`);
         return; // Removed unused 'tiles' variable
+    }
+
+    mergeGraph(graphs: Graph[]): Graph {
+        const start = new Date().getTime();
+        const points = [];
+        const edges = [];
+        for (const graph of graphs) {
+            points.push(...graph.points);
+            edges.push(...graph.edges);
+        }
+        const end = new Date().getTime();
+        console.log(`Merging graphs took ${end - start}ms`);
+        return new Graph(points, edges);
+    }
+
+    getAllTileGraphs() {
+        const graphs = [];
+        for (const tile of this.tiles.values()) {
+            graphs.push(tile.getGraph());
+        }
+        return graphs;
     }
 }

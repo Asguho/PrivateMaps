@@ -128,6 +128,8 @@
 				console.log("Start Coords:", startCoords);
 				console.log("End Coords:", endCoords);
 
+				const graph = tileManager.mergeGraph(tileManager.getAllTileGraphs());
+
 				//make the start and end coords snap to the nearest point
 				const startpoint = graph.placePointOnEdge(startCoords.y, startCoords.x);
 				const endpoint = graph.placePointOnEdge(endCoords.y, endCoords.x);

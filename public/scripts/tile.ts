@@ -40,4 +40,11 @@ export class Tile {
     this.graph = await this.loader.load(this.tileLatStart, this.tileLonStart, this.tileLatEnd, this.tileLonEnd);
     return { graph: this.graph };
   }
+
+  getGraph(): Graph | null {
+    if (!this.graph) {
+      return null;
+    }
+    return this.graph;
+  }
 }

@@ -79,8 +79,8 @@ export class aStar extends Algo {
 
         const neighborNodeInSet = this.openSet.get(neighbor.id) as AStarNode;
         if (!neighborNodeInSet || neighborNodeInSet.f > fScore) {
-          this.openSet.set(neighbor.id, neighborNode);  // Update the openSet
-          this.openList.insert(neighborNode);           // Insert into the priority queue
+          this.openSet.set(neighbor.id, neighborNode);  
+          this.openList.insert(neighborNode);           
         }
       }
     }

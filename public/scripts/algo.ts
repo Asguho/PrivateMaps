@@ -86,8 +86,9 @@ export class Algo {
 
   getNeighbors(point: Point) {
     return this.graph.edges
-        .filter(({ point1, point2, isCarAllowed }) => 
-            isCarAllowed && (point1.id === point.id || point2.id === point.id)
+        .filter(({ point1, point2, isCarAllowed, oneway, junction }) => 
+          isCarAllowed && 
+        (point1.id === point.id || (point2.id === point.id && (!((oneway) || (junction)))))
         )
         .map(({ point1, point2 }) => (point1.id === point.id ? point2 : point1));
 }
@@ -99,7 +100,7 @@ export class Algo {
     for (let i = 0; i < this.currentPath.size() - 1; i++) {
       const point1: Point = this.currentPath[i];
       const point2: Point = this.currentPath[i + 1];
-      newGraph.addEdge(new Edge(point1, point2, 'true', 20, 'optimal'));
+      newGraph.addEdge(new Edge(point1, point2, 'true', 20, 'optimal', false, false));
       pointSet.add(point1);
       pointSet.add(point2);
     }

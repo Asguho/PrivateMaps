@@ -59,7 +59,7 @@ out geom;
             console.log('Missing point');
             continue;
           }
-          this.edges.push(new Edge(from, to, element.tags.highway, element.tags.maxspeed, element.tags.name));
+          this.edges.push(new Edge(from, to, element.tags.highway, element.tags.maxspeed, element.tags.name, (element.tags.oneway === "yes"), (element.tags.junction === "roundabout")));
         }
       }
     }

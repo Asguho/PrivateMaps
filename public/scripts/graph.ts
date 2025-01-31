@@ -65,9 +65,9 @@ export class Graph {
 
     this.edges = this.edges.filter((e) => e !== edge);
     // @ts-ignore
-    this.addEdge(new Edge(point1, newPoint, edge.type, edge.maxSpeed, edge.streetName));
+    this.addEdge(new Edge(point1, newPoint, edge.type, edge.maxSpeed, edge.streetName, edge.oneway, edge.junction));
     // @ts-ignore
-    this.addEdge(new Edge(newPoint, point2, edge.type, edge.maxSpeed, edge.streetName));
+    this.addEdge(new Edge(newPoint, point2, edge.type, edge.maxSpeed, edge.streetName, edge.oneway, edge.junction));
 
     return newPoint;
   }

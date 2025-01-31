@@ -23,9 +23,7 @@
 		import { Graph } from "./scripts/graph.ts";
 		import { OsmLoader } from "./scripts/osmLoader.ts";
 		import { Viewport } from "./scripts/viewport.ts";
-		import { aStar } from "./scripts/aStar.ts";
 		import { Path } from "./scripts/path.ts";
-		import { Djikstra } from "./scripts/djikstra.ts";
 		import { PathFinding } from "./scripts/pathfinding.ts";
 		import { TileManager } from "./scripts/tileManager.ts";
 		import { geoCoder } from "./scripts/geoCoder.ts";
@@ -45,30 +43,38 @@
 		const viewport = new Viewport(mapCanvas);
 		var fpath = null;
 
-		const loader = new OsmLoader();
-		const graph = await loader.load();
+		var startCoords;
+		var endCoords;
 
-
-		// Compute bounding box
-		let latMin = Infinity,
-			latMax = -Infinity;
-		let lonMin = Infinity,
-			lonMax = -Infinity;
-		graph.points.forEach((p) => {
-			if (p.lat < latMin) latMin = p.lat;
-			if (p.lat > latMax) latMax = p.lat;
-			if (p.lon < lonMin) lonMin = p.lon;
-			if (p.lon > lonMax) lonMax = p.lon;
-		});
-		viewport.autoFit(latMin, latMax, lonMin, lonMax);
+		//const tile = new Tile(55.729562, 12.490795, 55.74636, 12.515606);
+		const tileManager = new TileManager(viewport);
+		viewport.setOffset(-6412933.175949172, -1140876.2422314237);
+		viewport.setScale(33316.74141999862);
+		tileManager.determineTilesInView(viewport);
 
 		function render() {
+			console.log("Rendering");
 			ctx.clearRect(0, 0, mapCanvas.width, mapCanvas.height);
-			graph.draw(ctx, viewport);
-			if (fpath) { fpath.draw(ctx, viewport); }
-
+			tileManager.draw(ctx, viewport);
+			if (fpath) {
+				fpath.draw(ctx, viewport);
+			}
 		}
 		render();
+
+		let renderTimeout;
+
+		function throttleRender() {
+			if (!renderTimeout) {
+				renderTimeout = setTimeout(() => {
+					render();
+					renderTimeout = null;
+				}, 16); // Approximately 60fps
+			}
+		}
+
+		// Add event listener for 'redraw' event
+		viewport.canvas.addEventListener("redraw", render);
 
 		// Mouse events for panning
 		let isDragging = false;
@@ -79,19 +85,23 @@
 			isDragging = true;
 			lastX = e.clientX;
 			lastY = e.clientY;
+			tileManager.determineTilesInView(viewport);
 		});
 
 		mapCanvas.addEventListener("mousemove", (e) => {
 			if (!isDragging) return;
+			//tileManager.determineTilesInView(viewport);
 			const dx = e.clientX - lastX;
 			const dy = e.clientY - lastY;
 			viewport.pan(dx, dy);
 			lastX = e.clientX;
 			lastY = e.clientY;
-			render();
+			throttleRender();
 		});
 
-		mapCanvas.addEventListener("mouseup", () => (isDragging = false));
+		mapCanvas.addEventListener("mouseup", () => {
+			isDragging = false;
+		});
 
 		// Wheel event for zoom
 		mapCanvas.addEventListener(
@@ -100,6 +110,7 @@
 				e.preventDefault();
 				const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
 				viewport.zoom(zoomFactor);
+				tileManager.determineTilesInView(viewport);
 				render();
 			},
 			{ passive: false }

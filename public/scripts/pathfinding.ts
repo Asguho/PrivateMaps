@@ -8,7 +8,9 @@ export class PathFinding {
   graph: Graph;
   start: Point;
   end: Point;
+  //@ts-ignore
   aStar: aStar;
+  //@ts-ignore
   djikstra: Djikstra;
 
   constructor(graph: Graph, start: Point, end: Point) {

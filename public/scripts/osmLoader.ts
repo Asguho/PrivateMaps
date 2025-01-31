@@ -12,12 +12,14 @@ export class OsmLoader {
 
   async load(latStart: number, lonStart: number, latEnd: number, lonEnd: number) {
     const result = await fetch(
-      "https://overpass-api.de/api/interpreter",
+      //"https://overpass-api.de/api/interpreter",
+      "http://localhost:8000/api",
       {
         method: "POST",
         // The body contains the query
         // to understand the query language see "The Programmatic Query Language" on
         // https://wiki.openstreetmap.org/wiki/Overpass_API#The_Programmatic_Query_Language_(OverpassQL)
+        cache: "force-cache",
         body: "data=" + encodeURIComponent(`
 [out:json][timeout:25];
 // gather results
@@ -65,9 +67,6 @@ out geom;
         }
       }
     }
-
-    console.log(this.points, this.edges);
-
     return new Graph(this.points, this.edges);
   }
 }

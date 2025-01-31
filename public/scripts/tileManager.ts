@@ -16,11 +16,12 @@ export class TileManager {
         this.tileSize = 0.03;
     }
 
-    draw(ctx: HTMLCanvasElement, viewport: Viewport) {
+    draw(ctx: CanvasRenderingContext2D, viewport: Viewport) {
         const { minLat, maxLat, minLon, maxLon } = viewport.getGeoBounds();
         let amountOfTilesRendered = 0;
         // Iterate over Map values
         for (let tile of this.tiles.values()) {
+
             if (
                 tile.tileLatEnd >= minLat &&
                 tile.tileLatStart <= maxLat &&
@@ -31,6 +32,8 @@ export class TileManager {
                 tile.draw(ctx, viewport);
             }
         }
+
+        
 
         console.log(`Amount of tiles rendered: ${amountOfTilesRendered}`);
     }

@@ -39,11 +39,11 @@ export class Path {
     return totalDistance;
 
   }
-  distance(node, goal) { // Haversine heuristic
+  distance(node: Point, goal: Point) { // Haversine heuristic
     const R = 6371e3;
     const [lat1, lon1] = [node.lat, node.lon];
     const [lat2, lon2] = [goal.lat, goal.lon];
-    const toRadians = (degrees) => degrees * Math.PI / 180;
+    const toRadians = (degrees: number) => degrees * Math.PI / 180;
     const dLat = toRadians(lat2 - lat1);
     const dLon = toRadians(lon2 - lon1);
     const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +

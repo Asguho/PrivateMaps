@@ -33,62 +33,14 @@ out geom;
         `),
       }
     ).then((data) => data.json());
-    const startTime = performance.now();
-    // Create points
-    const pointStartTimes = performance.now();
-    for (const element of result.elements) {
-      if (element.type === 'node') {
-        this.points.push(new Point(element.id, element.lat, element.lon));
-      }
+    let performanceStart = performance.now();
+    for (const point of result.points) {
+      this.points.push(new Point(point.id, point.lat, point.lon));
     }
-    const pointEndTimes = performance.now();
-    console.log(`Creating points took ${pointEndTimes - pointStartTimes}ms`);
-
-    const edgeStartTimes = performance.now();
-    // Create points for nodes in ways
-    for (const element of result.elements) {
-      if (element.type === 'way') {
-        for (let i = 0; i < element.geometry.length; i++) {
-          const node = element.geometry[i];
-          if (!this.points.find((point) => point.id === element.nodes[i])) {
-            this.points.push(new Point(element.nodes[i], node.lat, node.lon));
-          }
-        }
-      }
+    for (const edge of result.edges) {
+      this.edges.push(new Edge(edge.from, edge.to, edge.highway, edge.maxspeed, edge.name, edge.oneway, edge.junction));
     }
-    const edgeEndTimes = performance.now();
-    console.log(`Creating points for nodes in ways took ${edgeEndTimes - edgeStartTimes}ms`);
-
-    const edgeStartTimes2 = performance.now();
-    // Create edges
-    for (const element of result.elements) {
-      if (element.type === 'way') {
-        for (let i = 0; i < element.nodes.length - 1; i++) {
-          const from = this.points.find((point) => point.id === element.nodes[i]);
-          const to = this.points.find((point) => point.id === element.nodes[i + 1]);
-          if (!from || !to) {
-            console.log('Missing point');
-            continue;
-          }
-          this.edges.push(
-            new Edge(
-              from,
-              to,
-              element.tags.highway,
-              element.tags.maxspeed,
-              element.tags.name,
-              element.tags.oneway === 'yes',
-              element.tags.junction === 'roundabout'
-            )
-          );
-        }
-      }
-    }
-    const edgeEndTimes2 = performance.now();
-    console.log(`Creating edges took ${edgeEndTimes2 - edgeStartTimes2}ms`);
-
-    const endTime = performance.now();
-    console.log(`Loading took ${endTime - startTime}ms`);
+    console.log('Loaded', this.points.length, 'points and', this.edges.length, 'edges in ', performance.now() - performanceStart, 'ms');
     return new Graph(this.points, this.edges);
   }
 }

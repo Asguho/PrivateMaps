@@ -28,24 +28,23 @@ Deno.serve(async (request: Request) => {
 });
 
 async function cachedFetch(req: Request, body: string) {
+  const headers = {
+    'Content-Type': 'application/json',
+    'Cache-Control': 'public, max-age=31536000, immutable',
+  };
   const hashHex = await generateHash(req.url + body + PROGRAM_VERSION);
-  let response = await isCacheAvailable(hashHex);
+  const cacheResponse = await isCacheAvailable(hashHex);
 
-  if (!response) {
+  if (!cacheResponse) {
     const result = await fetch(req).then((res) => res.json());
-    response = JSON.stringify(convertToGraphData(result));
+    const response = JSON.stringify(convertToGraphData(result));
     addToCache(hashHex, response);
     console.log('SERVED FROM WEB: ' + hashHex);
+    return new Response(response, { headers });
   } else {
     console.log('SERVED FROM CACHE: ' + hashHex);
+    return new Response(cacheResponse, { headers });
   }
-
-  return new Response(response, {
-    headers: {
-      'Content-Type': 'application/json',
-      'Cache-Control': 'public, max-age=31536000, immutable',
-    },
-  });
 }
 
 async function generateHash(data: string) {
@@ -57,7 +56,7 @@ async function generateHash(data: string) {
 
 async function isCacheAvailable(hashHex: string) {
   if (cachedResponses.includes(hashHex)) {
-    return await Deno.readTextFile(`.cache/${hashHex}.json`);
+    return (await Deno.open(`.cache/${hashHex}.json`)).readable;
   }
   return undefined;
 }

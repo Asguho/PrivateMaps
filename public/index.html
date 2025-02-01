@@ -14,6 +14,9 @@
 			<input id="start" type="text" placeholder="Enter start location" />
 			<input id="end" type="text" placeholder="Enter end location" />
 			<button id="Run">Find Shortest Path</button>
+			<!--distance and time if available insert as p tag here-->
+			<p id="distance"></p>
+			<p id="time"></p>
 		</div>
 
 		<script type="module">
@@ -28,8 +31,8 @@
 			import { geoCoder } from "./scripts/geoCoder.ts";
 			import { Pin } from "./scripts/pin.ts";
 
-			let startPin = new Pin("Start", 0, 0, false);
-			let endPin = new Pin("End", 0, 0, false);
+			let startPin = new Pin("A", 0, 0, false);
+			let endPin = new Pin("B", 0, 0, false);
 
 			const mapCanvas = document.getElementById("mapCanvas");
 			mapCanvas.width = window.innerWidth;
@@ -125,6 +128,8 @@
 
 			const runButton = document.getElementById("Run");
 			runButton.addEventListener("click", async () => {
+				document.getElementById("distance").textContent = "";
+				document.getElementById("time").textContent = "";
 				const start = document.getElementById("start").value;
 				const end = document.getElementById("end").value;
 				const geocoder = new geoCoder();
@@ -148,8 +153,13 @@
 
 					const result = pathfinding.run();
 					const path = result.bestPath;
-					const algo = result.algorithm;
-					console.log("Pathfinding algorithm used:", algo);
+					const distanceInKm = result.distance / 1000;
+					const timeInMinutes = result.time / 60;
+
+					document.getElementById("distance").textContent = `Distance: ${distanceInKm.toFixed(2)} km`;
+					document.getElementById("time").textContent = `Time: ${timeInMinutes.toFixed(0)} min`;
+
+					console.log("Pathfinding algorithm used:", result.algorithm);
 					console.log("PathFinding path points:", path);
 
 					//console.log("PathFinding path points:", pathPoints); // Add debugging here

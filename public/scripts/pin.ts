@@ -35,6 +35,9 @@ export class Pin {
 		ctx.textAlign = "center";
 		ctx.textBaseline = "middle";
 
+		// Draw the pin id above the emoji.
+		ctx.fillText(this.id.toString(), x, y - 20);
+
 		// Draw the pushpin emoji at the computed coordinates.
 		ctx.fillText("📍", x, y);
 	}

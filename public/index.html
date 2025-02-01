@@ -26,6 +26,10 @@
 			import { PathFinding } from "./scripts/pathfinding.ts";
 			import { TileManager } from "./scripts/tileManager.ts";
 			import { geoCoder } from "./scripts/geoCoder.ts";
+			import { Pin } from "./scripts/pin.ts";
+
+			let startPin = new Pin("Start", 0, 0, false);
+			let endPin = new Pin("End", 0, 0, false);
 
 			const mapCanvas = document.getElementById("mapCanvas");
 			mapCanvas.width = window.innerWidth;
@@ -57,6 +61,9 @@
 				if (fpath) {
 					fpath.draw(ctx, viewport);
 				}
+
+				startPin.draw(ctx, viewport);
+				endPin.draw(ctx, viewport);
 			}
 			render();
 
@@ -126,6 +133,9 @@
 					const endCoords = await geocoder.run(end);
 					console.log("Start Coords:", startCoords);
 					console.log("End Coords:", endCoords);
+
+					startPin.setLatLon(startCoords.y, startCoords.x);
+					endPin.setLatLon(endCoords.y, endCoords.x);
 
 					const graph = tileManager.mergeGraph(tileManager.getAllTileGraphs());
 

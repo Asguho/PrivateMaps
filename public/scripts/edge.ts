@@ -7,7 +7,7 @@ export class Edge {
 	type: string;
 	isCarAllowed: boolean;
 	maxSpeed: number;
-	color: number;
+	color: string;
 	streetName: string;
 	oneway: boolean;
 	junction: boolean;
@@ -32,15 +32,39 @@ export class Edge {
 		this.junction = junction;
 	}
 
-	getColorBasedOnType(type: string) {
-		// https://wiki.openstreetmap.org/wiki/Key:highway
-		if (this.isCarAllowedBasedOnType(type)) {
-			return 120;
-		}
-		return 200;
+	/**
+	 * Returns a hex color string for the given road type, using a Google-inspired palette.
+	 * Note: The lightest roads now use a light gray (#d3d3d3) so they remain visible on a white background.
+	 */
+	getColorBasedOnType(type: string): string {
+		const roadColors: { [key: string]: string } = {
+			// Major roads
+			motorway: "#e7711b", // Bold, dark orange
+			trunk: "#e7711b", // Bold, dark orange
+			primary: "#ffcc00", // Bright yellow/orange
+			// Intermediate roads
+			secondary: "#ffe699", // Soft yellow
+			tertiary: "#ffd966", // Slightly darker soft yellow
+			// Minor roads - using light gray so they contrast on a white background
+			residential: "#d3d3d3",
+			unclassified: "#d3d3d3",
+			service: "#d3d3d3",
+			// Non-car paths and pedestrian zones - a slightly darker gray for better differentiation
+			pedestrian: "#c0c0c0",
+			footway: "#c0c0c0",
+			cycleway: "#c0c0c0",
+			path: "#c0c0c0",
+			steps: "#c0c0c0",
+		};
+
+		// Return the mapped color, defaulting to light gray if the type is not found.
+		return roadColors[type] ?? "#d3d3d3";
 	}
 
-	isCarAllowedBasedOnType(type: string) {
+	/**
+	 * Determines if a given road type allows cars.
+	 */
+	isCarAllowedBasedOnType(type: string): boolean {
 		if (
 			type === "pedestrian" ||
 			type === "footway" ||
@@ -56,12 +80,10 @@ export class Edge {
 	}
 
 	/**
-	 * Returns a minimum viewport.scale (zoom level) required to render a road based on its type.
-	 *
-	 * The values below are chosen so that major roads like motorways and trunks are rendered
-	 * even when zoomed out, while smaller roads like residential or service roads only show up when zoomed in.
+	 * Returns the minimum viewport.scale (zoom level) required to render a road based on its type.
+	 * Major roads appear at lower zoom levels, while minor roads only show up when zoomed in.
 	 */
-	getMinZoomBasedOnType(type: string) {
+	getMinZoomBasedOnType(type: string): number {
 		const zoomLevels: { [key: string]: number } = {
 			motorway: 0,
 			trunk: 0,
@@ -71,7 +93,6 @@ export class Edge {
 			residential: 8000,
 			unclassified: 10000,
 			service: 12000,
-			// For pedestrian and similar paths, we show them only at high zoom levels
 			pedestrian: 14000,
 			footway: 14000,
 			cycleway: 14000,
@@ -84,9 +105,9 @@ export class Edge {
 
 	/**
 	 * Draws the road edge onto the canvas using the provided viewport.
-	 * Adjusts both the rendering based on the zoom level (LOD) and the line width for visual clarity.
+	 * The method adjusts both the level-of-detail (LOD) and the line width based on the zoom level.
 	 */
-	draw(ctx: CanvasRenderingContext2D, viewport: Viewport) {
+	draw(ctx: CanvasRenderingContext2D, viewport: Viewport): void {
 		// Check if we should render this road at the current zoom level.
 		const minZoom = this.getMinZoomBasedOnType(this.type);
 		if (viewport.scale < minZoom) return;
@@ -98,18 +119,16 @@ export class Edge {
 		ctx.beginPath();
 		ctx.moveTo(x1, y1);
 		ctx.lineTo(x2, y2);
-		ctx.strokeStyle = `hsl(${this.color}, 50%, 30%)`;
+		ctx.strokeStyle = this.color;
 
-		// Adjust line width based on zoom level.
-		// This example uses a simple proportional mapping:
-		// - When viewport.scale is 30000 (fully zoomed in), the line width will be 5.
-		// - When viewport.scale is lower, the line width scales down, but never below 1.
+		// Adjust line width based on zoom level:
+		// When fully zoomed in (viewport.scale ~ 30000), the road is drawn with a thicker line.
 		const maxZoom = 30000;
 		const baseLineWidth = 5;
 		const normalizedZoom = viewport.scale / maxZoom;
 		const lineWidth = Math.max(1, normalizedZoom * baseLineWidth);
-
 		ctx.lineWidth = lineWidth;
+
 		ctx.stroke();
 	}
 }

@@ -13,14 +13,16 @@ export class OsmLoader {
   async load(latStart: number, lonStart: number, latEnd: number, lonEnd: number) {
     const result = await fetch(
       //"https://overpass-api.de/api/interpreter",
-      "http://localhost:8000/api",
+      'http://localhost:8000/api',
       {
-        method: "POST",
+        method: 'POST',
         // The body contains the query
         // to understand the query language see "The Programmatic Query Language" on
         // https://wiki.openstreetmap.org/wiki/Overpass_API#The_Programmatic_Query_Language_(OverpassQL)
-        cache: "force-cache",
-        body: "data=" + encodeURIComponent(`
+        cache: 'force-cache',
+        body:
+          'data=' +
+          encodeURIComponent(`
 [out:json][timeout:25];
 // gather results
 (
@@ -28,19 +30,21 @@ export class OsmLoader {
 );
 // print results
 out geom;
-        `)
-      },
-    ).then(
-      (data) => data.json()
-    )
-
+        `),
+      }
+    ).then((data) => data.json());
+    const startTime = performance.now();
     // Create points
+    const pointStartTimes = performance.now();
     for (const element of result.elements) {
-      if (element.type === "node") {
+      if (element.type === 'node') {
         this.points.push(new Point(element.id, element.lat, element.lon));
       }
     }
+    const pointEndTimes = performance.now();
+    console.log(`Creating points took ${pointEndTimes - pointStartTimes}ms`);
 
+    const edgeStartTimes = performance.now();
     // Create points for nodes in ways
     for (const element of result.elements) {
       if (element.type === 'way') {
@@ -52,7 +56,10 @@ out geom;
         }
       }
     }
+    const edgeEndTimes = performance.now();
+    console.log(`Creating points for nodes in ways took ${edgeEndTimes - edgeStartTimes}ms`);
 
+    const edgeStartTimes2 = performance.now();
     // Create edges
     for (const element of result.elements) {
       if (element.type === 'way') {
@@ -63,10 +70,25 @@ out geom;
             console.log('Missing point');
             continue;
           }
-          this.edges.push(new Edge(from, to, element.tags.highway, element.tags.maxspeed, element.tags.name, (element.tags.oneway === "yes"), (element.tags.junction === "roundabout")));
+          this.edges.push(
+            new Edge(
+              from,
+              to,
+              element.tags.highway,
+              element.tags.maxspeed,
+              element.tags.name,
+              element.tags.oneway === 'yes',
+              element.tags.junction === 'roundabout'
+            )
+          );
         }
       }
     }
+    const edgeEndTimes2 = performance.now();
+    console.log(`Creating edges took ${edgeEndTimes2 - edgeStartTimes2}ms`);
+
+    const endTime = performance.now();
+    console.log(`Loading took ${endTime - startTime}ms`);
     return new Graph(this.points, this.edges);
   }
 }

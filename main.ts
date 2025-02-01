@@ -3,7 +3,7 @@ import { crypto } from 'jsr:@std/crypto';
 
 const CACHE_PATH = '.cache/cachedTiles.txt';
 const FETCH_URL = 'https://overpass-api.de/api/interpreter';
-const PROGRAM_VERSION = '0.2.0';
+const PROGRAM_VERSION = '0.2.1';
 
 let cachedResponses: string[] = [];
 try {
@@ -29,20 +29,23 @@ Deno.serve(async (request: Request) => {
 
 async function cachedFetch(req: Request, body: string) {
   const hashHex = await generateHash(req.url + body + PROGRAM_VERSION);
-  const cacheResp = await isCacheAvailable(hashHex);
+  let response = await isCacheAvailable(hashHex);
 
-  if (cacheResp) {
-    console.log('SERVED FROM CACHE: ' + hashHex);
-    return new Response(cacheResp, { headers: { 'Content-Type': 'application/json' } });
-  } else {
+  if (!response) {
     const result = await fetch(req).then((res) => res.json());
-    const data = convertToGraphData(result);
-    Deno.writeTextFile(`.cache/${hashHex}.json`, JSON.stringify(data));
-    cachedResponses.push(hashHex);
-    Deno.writeTextFile(CACHE_PATH, JSON.stringify(cachedResponses));
+    response = JSON.stringify(convertToGraphData(result));
+    addToCache(hashHex, response);
     console.log('SERVED FROM WEB: ' + hashHex);
-    return Response.json(data);
+  } else {
+    console.log('SERVED FROM CACHE: ' + hashHex);
   }
+
+  return new Response(response, {
+    headers: {
+      'Content-Type': 'application/json',
+      'Cache-Control': 'public, max-age=31536000, immutable',
+    },
+  });
 }
 
 async function generateHash(data: string) {
@@ -57,6 +60,11 @@ async function isCacheAvailable(hashHex: string) {
     return await Deno.readTextFile(`.cache/${hashHex}.json`);
   }
   return undefined;
+}
+function addToCache(hashHex: string, response: string) {
+  cachedResponses.push(hashHex);
+  Deno.writeTextFile(CACHE_PATH, JSON.stringify(cachedResponses));
+  Deno.writeTextFile(`.cache/${hashHex}.json`, response);
 }
 
 function convertToGraphData(result: any) {

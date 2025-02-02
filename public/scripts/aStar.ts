@@ -26,7 +26,8 @@ export class aStar extends Algo {
             this.distances.get(point1.id)?.set(point2.id, travelTime);
             this.distances.get(point2.id)?.set(point1.id, travelTime);
         });
-        this.avgSpeed = this.getWeightedAverageSpeed();
+        this.avgSpeed = 55; //this.getWeightedAverageSpeed();
+        //console.log('Average speed:', this.avgSpeed);
     }
 
     popOpen() {
@@ -43,12 +44,7 @@ export class aStar extends Algo {
 
     run() {
         console.log(this.start, this.end);
-        const startNode = new AStarNode(
-            this.start,
-            null,
-            0,
-            this.heuristic(this.start, this.end),
-        );
+        const startNode = new AStarNode(this.start, null, 0, this.heuristic(this.start, this.end));
         this.openList.insert(startNode);
         console.log('Start node:', startNode.f === startNode.g + startNode.h);
         while (!this.openList.isEmpty()) {
@@ -56,16 +52,14 @@ export class aStar extends Algo {
             if (!currentNode) {
                 continue;
             }
-
             if (currentNode.equals(this.end)) {
                 this.currentPath = this.reconstructPath(currentNode);
                 return this.currentPath;
             }
-
             this.addClosed(currentNode);
 
             const neighbors = this.getNeighbors(currentNode);
-            console.log('Neighbors:', neighbors.length, neighbors);
+            //   console.log('Neighbors:', neighbors.length, neighbors);
             for (const neighbor of neighbors) {
                 if (this.isInClosed(neighbor)) continue;
 
@@ -74,12 +68,7 @@ export class aStar extends Algo {
                 const gScore = (currentNode as AStarNode).g + (distance ?? 0);
                 const hScore = this.heuristic(neighbor, this.end);
                 const fScore = gScore + hScore;
-                const neighborNode = new AStarNode(
-                    neighbor,
-                    currentNode,
-                    gScore,
-                    hScore,
-                );
+                const neighborNode = new AStarNode(neighbor, currentNode, gScore, hScore);
 
                 const neighborNodeInSet = this.openSet.get(neighbor.id) as AStarNode;
                 if (!neighborNodeInSet || neighborNodeInSet.f > fScore) {
@@ -110,18 +99,17 @@ export class aStar extends Algo {
         // Avoid division by zero
         return totalDistance > 0 ? totalWeightedSpeed / totalDistance : 0;
     }
-    heuristic(point1, point2) {
+    heuristic(point1: Point, point2: Point) {
         const R = 6371e3; // Earth's radius in meters
         const [lat1, lon1] = [point1.lat, point1.lon];
         const [lat2, lon2] = [point2.lat, point2.lon];
-        const toRadians = (degrees) => (degrees * Math.PI) / 180;
+        const toRadians = (degrees: number) => (degrees * Math.PI) / 180;
 
         const dLat = toRadians(lat2 - lat1);
         const dLon = toRadians(lon2 - lon1);
 
         const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-            Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) *
-                Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
         const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         const distance = R * c;
         return distance / this.avgSpeed;

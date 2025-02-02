@@ -20,7 +20,6 @@ export class Graph {
 
     draw(ctx: CanvasRenderingContext2D, viewport: Viewport) {
         this.edges.forEach((edge) => edge.draw(ctx, viewport));
-        this.points.forEach((point) => point.draw(ctx, viewport));
     }
 
     nearestEdge(lat: number, lon: number) {
@@ -62,37 +61,13 @@ export class Graph {
 
         this.edges = this.edges.filter((e) => e !== edge);
         // @ts-ignore edge is not null but wth
-        this.addEdge(
-            new Edge(
-                point1,
-                newPoint,
-                edge.type,
-                edge.maxSpeed,
-                edge.streetName,
-                edge.oneway,
-                edge.junction,
-            ),
-        );
+        this.addEdge(new Edge(point1, newPoint, edge.type, edge.maxSpeed, edge.streetName, edge.oneway, edge.junction));
         // @ts-ignore edge is not null but wth
-        this.addEdge(
-            new Edge(
-                newPoint,
-                point2,
-                edge.type,
-                edge.maxSpeed,
-                edge.streetName,
-                edge.oneway,
-                edge.junction,
-            ),
-        );
+        this.addEdge(new Edge(newPoint, point2, edge.type, edge.maxSpeed, edge.streetName, edge.oneway, edge.junction));
 
         return newPoint;
     }
-    distanceToSegment(
-        pt: { x: number; y: number },
-        p1: { x: number; y: number },
-        p2: { x: number; y: number },
-    ) {
+    distanceToSegment(pt: { x: number; y: number }, p1: { x: number; y: number }, p2: { x: number; y: number }) {
         let closest = { x: 0, y: 0 };
 
         let dx = p2.x - p1.x;

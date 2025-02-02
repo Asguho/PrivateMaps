@@ -10,48 +10,43 @@ try {
     cachedResponses = JSON.parse((await Deno.readTextFile(CACHE_PATH)) || '[]');
 } catch (error) {
     if (error instanceof Deno.errors.NotFound) {
+        await Deno.mkdir('.cache', { recursive: true });
         await Deno.writeTextFile(CACHE_PATH, '[]');
     } else {
         throw error;
     }
 }
 
-await Deno.mkdir('.cache', { recursive: true });
+const headers = {
+    'Content-Type': 'application/json',
+    'Cache-Control': 'public, max-age=31536000, immutable',
+};
 
 Deno.serve(async (request: Request) => {
     if (request.url.includes('/api')) {
+        const startServeTime = performance.now();
         const body = await request.text();
         const req = new Request(FETCH_URL, { method: 'POST', body });
-        return await cachedFetch(req, body);
+        const hashHex = await generateHash(req.url + body + PROGRAM_VERSION);
+        const cacheResponse = await isCacheAvailable(hashHex);
+
+        if (!cacheResponse) {
+            const result = await fetch(req).then((res) => res.json());
+            console.log(result);
+            const response = JSON.stringify(convertToGraphData(result));
+            addToCache(hashHex, response);
+            console.log('SERVED FROM WEB: ' + hashHex + ' in ' + (performance.now() - startServeTime) + 'ms');
+            return new Response(response, { headers });
+        } else {
+            console.log('SERVED FROM CACHE: ' + hashHex + ' in ' + (performance.now() - startServeTime) + 'ms');
+            return new Response(cacheResponse, { headers });
+        }
     }
     return serveDirWithTs(request, { fsRoot: './public', showIndex: true });
 });
 
-async function cachedFetch(req: Request, body: string) {
-    const headers = {
-        'Content-Type': 'application/json',
-        'Cache-Control': 'public, max-age=31536000, immutable',
-    };
-    const hashHex = await generateHash(req.url + body + PROGRAM_VERSION);
-    const cacheResponse = await isCacheAvailable(hashHex);
-
-    if (!cacheResponse) {
-        const result = await fetch(req).then((res) => res.json());
-        const response = JSON.stringify(convertToGraphData(result));
-        addToCache(hashHex, response);
-        console.log('SERVED FROM WEB: ' + hashHex);
-        return new Response(response, { headers });
-    } else {
-        console.log('SERVED FROM CACHE: ' + hashHex);
-        return new Response(cacheResponse, { headers });
-    }
-}
-
 async function generateHash(data: string) {
-    const hashBuffer = await crypto.subtle.digest(
-        'md5',
-        new TextEncoder().encode(data),
-    );
+    const hashBuffer = await crypto.subtle.digest('md5', new TextEncoder().encode(data));
     return Array.from(new Uint8Array(hashBuffer))
         .map((b) => b.toString(16).padStart(2, '0'))
         .join('');
@@ -70,14 +65,8 @@ function addToCache(hashHex: string, response: string) {
 }
 
 function convertToGraphData(result: any) {
-    const points = [];
-    const edges = [];
-
-    for (const element of result.elements) {
-        if (element.type === 'node') {
-            points.push({ id: element.id, lat: element.lat, lon: element.lon });
-        }
-    }
+    const points: { id: number; lat: number; lon: number }[] = [];
+    const edges: { from: any; to: any; highway: string; maxspeed: string; name: string; oneway: boolean; junction: boolean }[] = [];
 
     for (const element of result.elements) {
         if (element.type === 'way') {

@@ -3,26 +3,30 @@ import { Edge } from './edge.ts';
 import { Graph } from './graph.ts';
 
 export class OsmLoader {
-  points: Point[];
-  edges: Edge[];
-  constructor() {
-    this.points = [];
-    this.edges = [];
-  }
+    points: Point[];
+    edges: Edge[];
+    constructor() {
+        this.points = [];
+        this.edges = [];
+    }
 
-  async load(latStart: number, lonStart: number, latEnd: number, lonEnd: number) {
-    const result = await fetch(
-      //"https://overpass-api.de/api/interpreter",
-      'http://localhost:8000/api',
-      {
-        method: 'POST',
-        // The body contains the query
-        // to understand the query language see "The Programmatic Query Language" on
-        // https://wiki.openstreetmap.org/wiki/Overpass_API#The_Programmatic_Query_Language_(OverpassQL)
-        cache: 'force-cache',
-        body:
-          'data=' +
-          encodeURIComponent(`
+    async load(
+        latStart: number,
+        lonStart: number,
+        latEnd: number,
+        lonEnd: number,
+    ) {
+        const result = await fetch(
+            //"https://overpass-api.de/api/interpreter",
+            'http://localhost:8000/api',
+            {
+                method: 'POST',
+                // The body contains the query
+                // to understand the query language see "The Programmatic Query Language" on
+                // https://wiki.openstreetmap.org/wiki/Overpass_API#The_Programmatic_Query_Language_(OverpassQL)
+                cache: 'force-cache',
+                body: 'data=' +
+                    encodeURIComponent(`
 [out:json][timeout:25];
 // gather results
 (
@@ -31,16 +35,34 @@ export class OsmLoader {
 // print results
 out geom;
         `),
-      }
-    ).then((data) => data.json());
-    let performanceStart = performance.now();
-    for (const point of result.points) {
-      this.points.push(new Point(point.id, point.lat, point.lon));
+            },
+        ).then((data) => data.json());
+        let performanceStart = performance.now();
+        for (const point of result.points) {
+            this.points.push(new Point(point.id, point.lat, point.lon));
+        }
+        for (const edge of result.edges) {
+            this.edges.push(
+                new Edge(
+                    edge.from,
+                    edge.to,
+                    edge.highway,
+                    edge.maxspeed,
+                    edge.name,
+                    edge.oneway,
+                    edge.junction,
+                ),
+            );
+        }
+        console.log(
+            'Loaded',
+            this.points.length,
+            'points and',
+            this.edges.length,
+            'edges in ',
+            performance.now() - performanceStart,
+            'ms',
+        );
+        return new Graph(this.points, this.edges);
     }
-    for (const edge of result.edges) {
-      this.edges.push(new Edge(edge.from, edge.to, edge.highway, edge.maxspeed, edge.name, edge.oneway, edge.junction));
-    }
-    console.log('Loaded', this.points.length, 'points and', this.edges.length, 'edges in ', performance.now() - performanceStart, 'ms');
-    return new Graph(this.points, this.edges);
-  }
 }

@@ -94,28 +94,18 @@ export class TileManager {
         const start = new Date().getTime();
         const points = [];
         const edges = [];
-        const pointSet = new Set();
-        const edgeSet = new Set();
+        const neighbors = new Map<number, number[]>();
 
         for (const graph of graphs) {
-            //   for (const point of graph.points) {
-            //     if (!pointSet.has(point.id)) {
-            //       pointSet.add(point.id);
-            //       points.push(point);
-            //     }
-            //   }
-            //   for (const edge of graph.edges) {
-            //     if (!edgeSet.has(edge.id)) {
-            //       edgeSet.add(edge.id);
-            //       edges.push(edge);
-            //     }
-            //   }
             points.push(...graph.points);
             edges.push(...graph.edges);
+            for (const [pointId, neighborIds] of graph.neighbors) {
+                neighbors.set(pointId, neighborIds);
+            }
         }
         const end = new Date().getTime();
         console.log(`Merging graphs took ${end - start}ms`);
-        return new Graph(points, edges);
+        return new Graph(points, edges, neighbors);
     }
 
     getAllTileGraphs() {

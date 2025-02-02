@@ -39,7 +39,16 @@ out geom;
         for (const edge of result.graph.edges) {
             this.edges.push(new Edge(edge.id, edge.from, edge.to, edge.highway, edge.maxspeed, edge.name, edge.oneway, edge.junction));
         }
+        const neighborsMap = new Map<number, number[]>();
+        for (const [key, value] of Object.entries(result.neighbors)) {
+            neighborsMap.set(Number(key), value as number[]);
+        }
         console.log('Loaded', this.points.length, 'points and', this.edges.length, 'edges in ', performance.now() - performanceStart, 'ms');
-        return new Graph(this.points, this.edges); //, result.neighbors
+
+        return new Graph(
+            this.points,
+            this.edges,
+            neighborsMap,
+        );
     }
 }

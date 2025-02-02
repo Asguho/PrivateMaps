@@ -62,8 +62,7 @@ export class Algo {
         const dLat = toRadians(lat2 - lat1);
         const dLon = toRadians(lon2 - lon1);
         const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-            Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) *
-                Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
         const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         if (isNaN(R * c)) console.log('Distance:', R * c);
         return R * c;
@@ -83,9 +82,7 @@ export class Algo {
         return this.graph.edges
             .filter(
                 ({ point1, point2, isCarAllowed, oneway, junction }) =>
-                    isCarAllowed &&
-                    (point1.id === point.id ||
-                        (point2.id === point.id && !(oneway || junction))),
+                    isCarAllowed && (point1.id === point.id || (point2.id === point.id && !(oneway || junction))),
             )
             .map(({ point1, point2 }) => (point1.id === point.id ? point2 : point1));
     }
@@ -97,9 +94,7 @@ export class Algo {
         for (let i = 0; i < this.currentPath.size() - 1; i++) {
             const point1: Point = this.currentPath[i];
             const point2: Point = this.currentPath[i + 1];
-            newGraph.addEdge(
-                new Edge(point1, point2, 'true', 20, 'optimal', false, false),
-            );
+            newGraph.addEdge(new Edge(-1, point1, point2, 'true', 20, 'optimal', false, false));
             pointSet.add(point1);
             pointSet.add(point2);
         }

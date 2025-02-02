@@ -16,10 +16,10 @@ export class Path {
             ctx.lineWidth = 3;
             ctx.beginPath();
 
-            const startCoords = this.points[0].toCanvasCoordinates(viewport);
+            const startCoords = viewport.geoToCanvas(this.points[0].lat, this.points[0].lon);
             ctx.moveTo(startCoords.x, startCoords.y);
             for (let i = 1; i < this.points.length; i++) {
-                const coords = this.points[i].toCanvasCoordinates(viewport);
+                const coords = viewport.geoToCanvas(this.points[i].lat, this.points[i].lon);
                 ctx.lineTo(coords.x, coords.y);
             }
             ctx.stroke();
@@ -38,16 +38,16 @@ export class Path {
         }
         return totalDistance;
     }
-    distance(node: Point, goal: Point) { // Haversine heuristic
+    distance(node: Point, goal: Point) {
+        // Haversine heuristic
         const R = 6371e3;
         const [lat1, lon1] = [node.lat, node.lon];
         const [lat2, lon2] = [goal.lat, goal.lon];
-        const toRadians = (degrees: number) => degrees * Math.PI / 180;
+        const toRadians = (degrees: number) => (degrees * Math.PI) / 180;
         const dLat = toRadians(lat2 - lat1);
         const dLon = toRadians(lon2 - lon1);
         const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-            Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) *
-                Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
         const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         return R * c;
     }

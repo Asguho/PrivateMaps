@@ -3,7 +3,7 @@ import { crypto } from 'jsr:@std/crypto';
 
 const CACHE_PATH = '.cache/cachedTiles.txt';
 const FETCH_URL = 'https://overpass-api.de/api/interpreter';
-const PROGRAM_VERSION = '0.3.0';
+const PROGRAM_VERSION = '0.3.2';
 
 let cachedResponses: string[] = [];
 try {
@@ -157,16 +157,18 @@ function getNeighbors(data: any) {
 }
 function getNeighborsFromEdges(edges: Edge[]) {
     const neighbors = new Map<number, Point[]>();
-    const filteredEdges = edges.filter((edge) => isCarAllowedBasedOnType(edge.highway) && !edge.oneway && !edge.junction);
+    const filteredEdges = edges.filter((edge) => isCarAllowedBasedOnType(edge.highway));
     for (const edge of filteredEdges) {
         if (!neighbors.has(edge.from.id)) {
             neighbors.set(edge.from.id, []);
         }
-        if (!neighbors.has(edge.to.id)) {
-            neighbors.set(edge.to.id, []);
-        }
         neighbors.get(edge.from.id)?.push(edge.to);
-        neighbors.get(edge.to.id)?.push(edge.from);
+        if (!edge.oneway && !edge.junction) {
+            if (!neighbors.has(edge.to.id)) {
+                neighbors.set(edge.to.id, []);
+            }
+            neighbors.get(edge.to.id)?.push(edge.from);
+        }
     }
     return neighbors;
 }

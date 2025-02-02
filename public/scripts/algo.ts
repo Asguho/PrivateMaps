@@ -79,22 +79,7 @@ export class Algo {
     }
 
     getNeighbors(point: Point) {
-        const newNeigbors = this.graph.neighbors.get(point.id) || [];
-
-        const oldNeighbors = this.graph.edges
-            .filter(
-                ({ point1, point2, isCarAllowed, oneway, junction }) =>
-                    isCarAllowed && (point1.id === point.id || (point2.id === point.id && !(oneway || junction))),
-            )
-            .map(({ point1, point2 }) => (point1.id === point.id ? point2 : point1));
-
-        // if (JSON.stringify(newNeigbors) === JSON.stringify(oldNeighbors)) {
-        //     console.log('The neighbors are equal.', newNeigbors, oldNeighbors);
-        // } else {
-        //     console.log('The neighbors are not equal.', newNeigbors, oldNeighbors);
-        // }
-
-        return newNeigbors;
+        return this.graph.neighbors.get(point.id) || [];
     }
 
     createGraphWithOptimalPath() {

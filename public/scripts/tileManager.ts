@@ -100,7 +100,15 @@ export class TileManager {
             points.push(...graph.points);
             edges.push(...graph.edges);
             for (const [pointId, neighborIds] of graph.neighbors) {
-                neighbors.set(pointId, neighborIds);
+                if (neighbors.has(pointId)) {
+                    for (const neighborId of neighborIds) {
+                        if (!neighbors.get(pointId).includes(neighborId)) {
+                            neighbors.get(pointId).push(neighborId);
+                        }
+                    }
+                } else {
+                    neighbors.set(pointId, neighborIds);
+                }
             }
         }
         const end = new Date().getTime();

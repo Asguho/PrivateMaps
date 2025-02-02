@@ -52,7 +52,7 @@ export class aStar extends Algo {
             if (!currentNode) {
                 continue;
             }
-            if (currentNode.equals(this.end)) {
+            if (currentNode.id === this.end.id) {
                 this.currentPath = this.reconstructPath(currentNode);
                 return this.currentPath;
             }

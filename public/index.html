@@ -68,9 +68,9 @@
                 ctx.lineWidth = 2;
                 ctx.beginPath();
                 for (const point of explored) {
-                    const screenPoint = viewport.geoToCanvas(point.lat, point.lon);
-                    ctx.moveTo(screenPoint.x, screenPoint.y);
-                    ctx.arc(screenPoint.x, screenPoint.y, 2, 0, 2 * Math.PI);
+                    //const screenPoint = viewport.geoToCanvas(point.lat, point.lon);
+                    //ctx.moveTo(screenPoint.x, screenPoint.y);
+                    //ctx.arc(screenPoint.x, screenPoint.y, 2, 0, 2 * Math.PI);
                 }
                 ctx.stroke();
             }
@@ -147,8 +147,10 @@
             const end = document.getElementById('end').value;
             const geocoder = new geoCoder();
             try {
-                const startCoords = await geocoder.run(start);
-                const endCoords = await geocoder.run(end);
+                const [startCoords, endCoords] = await Promise.all([
+                    geocoder.run(start),
+                    geocoder.run(end),
+                ]);
 
                 console.log('Start Coords:', startCoords);
                 console.log('End Coords:', endCoords);

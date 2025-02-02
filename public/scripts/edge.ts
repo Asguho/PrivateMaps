@@ -2,6 +2,7 @@ import { Point } from './point.ts';
 import { Viewport } from './viewport.ts';
 
 export class Edge {
+    id: number;
     point1: Point;
     point2: Point;
     type: string;
@@ -13,6 +14,7 @@ export class Edge {
     junction: boolean;
 
     constructor(
+        id: number,
         point1: Point,
         point2: Point,
         type: string,
@@ -21,6 +23,7 @@ export class Edge {
         oneway: boolean,
         junction: boolean,
     ) {
+        this.id = id;
         this.point1 = point1;
         this.point2 = point2;
         this.type = type;
@@ -114,14 +117,8 @@ export class Edge {
 
         // Convert geographical coordinates to canvas coordinates.
 
-        const { x: x1, y: y1 } = viewport.geoToCanvas(
-            this.point1.lat,
-            this.point1.lon,
-        );
-        const { x: x2, y: y2 } = viewport.geoToCanvas(
-            this.point2.lat,
-            this.point2.lon,
-        );
+        const { x: x1, y: y1 } = viewport.geoToCanvas(this.point1.lat, this.point1.lon);
+        const { x: x2, y: y2 } = viewport.geoToCanvas(this.point2.lat, this.point2.lon);
 
         ctx.beginPath();
         ctx.moveTo(x1, y1);

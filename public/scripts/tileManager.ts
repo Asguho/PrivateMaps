@@ -21,11 +21,8 @@ export class TileManager {
         const { minLat, maxLat, minLon, maxLon } = viewport.getGeoBounds();
         let amountOfTilesRendered = 0;
         // Iterate over Map values
-        for (let tile of this.tiles.values()) {
-            if (
-                tile.tileLatEnd >= minLat && tile.tileLatStart <= maxLat &&
-                tile.tileLonEnd >= minLon && tile.tileLonStart <= maxLon
-            ) {
+        for (const tile of this.tiles.values()) {
+            if (tile.tileLatEnd >= minLat && tile.tileLatStart <= maxLat && tile.tileLonEnd >= minLon && tile.tileLonStart <= maxLon) {
                 amountOfTilesRendered++;
                 tile.draw(ctx, viewport);
             }
@@ -89,9 +86,7 @@ export class TileManager {
         this.unloadedTiles = [];
 
         const end = new Date().getTime();
-        console.log(
-            `Determine tiles in view = ${amountOfTilesProcessed}: ${end - start}ms`,
-        );
+        console.log(`Determine tiles in view = ${amountOfTilesProcessed}: ${end - start}ms`);
         return; // Removed unused 'tiles' variable
     }
 
@@ -99,7 +94,22 @@ export class TileManager {
         const start = new Date().getTime();
         const points = [];
         const edges = [];
+        const pointSet = new Set();
+        const edgeSet = new Set();
+
         for (const graph of graphs) {
+            //   for (const point of graph.points) {
+            //     if (!pointSet.has(point.id)) {
+            //       pointSet.add(point.id);
+            //       points.push(point);
+            //     }
+            //   }
+            //   for (const edge of graph.edges) {
+            //     if (!edgeSet.has(edge.id)) {
+            //       edgeSet.add(edge.id);
+            //       edges.push(edge);
+            //     }
+            //   }
             points.push(...graph.points);
             edges.push(...graph.edges);
         }

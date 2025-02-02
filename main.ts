@@ -3,7 +3,7 @@ import { crypto } from 'jsr:@std/crypto';
 
 const CACHE_PATH = '.cache/cachedTiles.txt';
 const FETCH_URL = 'https://overpass-api.de/api/interpreter';
-const PROGRAM_VERSION = '0.2.1';
+const PROGRAM_VERSION = '0.2.2';
 
 let cachedResponses: string[] = [];
 try {
@@ -33,7 +33,7 @@ Deno.serve(async (request: Request) => {
         if (!cacheResponse) {
             const result = await fetch(req).then((res) => res.json());
             console.log(result);
-            const response = JSON.stringify(convertToGraphData(result));
+            const response = JSON.stringify({ graph: convertToGraphData(result), neighbors: Object.fromEntries(getNeighbors(result)) });
             addToCache(hashHex, response);
             console.log('SERVED FROM WEB: ' + hashHex + ' in ' + (performance.now() - startServeTime) + 'ms');
             return new Response(response, { headers });
@@ -64,9 +64,21 @@ function addToCache(hashHex: string, response: string) {
     Deno.writeTextFile(`.cache/${hashHex}.json`, response);
 }
 
+type Point = { id: number; lat: number; lon: number };
+type Edge = {
+    id: number;
+    from: Point;
+    to: Point;
+    highway: string;
+    maxspeed: string;
+    name: string;
+    oneway: boolean;
+    junction: boolean;
+};
+
 function convertToGraphData(result: any) {
-    const points: { id: number; lat: number; lon: number }[] = [];
-    const edges: { from: any; to: any; highway: string; maxspeed: string; name: string; oneway: boolean; junction: boolean }[] = [];
+    const points: Point[] = [];
+    const edges: Edge[] = [];
 
     for (const element of result.elements) {
         if (element.type === 'way') {
@@ -84,18 +96,57 @@ function convertToGraphData(result: any) {
             for (let i = 0; i < element.nodes.length - 1; i++) {
                 const from = points.find((point) => point.id === element.nodes[i]);
                 const to = points.find((point) => point.id === element.nodes[i + 1]);
-                edges.push({
-                    from: from,
-                    to: to,
-                    highway: element.tags.highway,
-                    maxspeed: element.tags.maxspeed,
-                    name: element.tags.name,
-                    oneway: element.tags.oneway === 'yes',
-                    junction: element.tags.junction === 'roundabout',
-                });
+                if (from && to) {
+                    edges.push({
+                        id: element.id,
+                        from: from,
+                        to: to,
+                        highway: element.tags.highway,
+                        maxspeed: element.tags.maxspeed,
+                        name: element.tags.name,
+                        oneway: element.tags.oneway === 'yes',
+                        junction: element.tags.junction === 'roundabout',
+                    });
+                }
             }
         }
     }
 
     return { points, edges };
+}
+function isCarAllowedBasedOnType(type: string): boolean {
+    if (
+        type === 'pedestrian' ||
+        type === 'footway' ||
+        type === 'path' ||
+        type === 'steps' ||
+        type === 'cycleway' ||
+        type === 'bus_guideway' ||
+        type === 'busway'
+    ) {
+        return false;
+    }
+    return true;
+}
+
+function getNeighbors(data: any) {
+    const neighbors = new Map<number, number[]>();
+    console.log(data.elements.forEach((element: any) => element.tags.highway));
+    const ways = data.elements.filter((element: any) => element.type === 'way' && isCarAllowedBasedOnType(element.tags.highway));
+    // oneway junction
+    for (const way of ways) {
+        for (let i = 0; i < way.nodes.length - 1; i++) {
+            const from = way.nodes[i];
+            const to = way.nodes[i + 1];
+            if (!neighbors.has(from)) {
+                neighbors.set(from, []);
+            }
+            if (!neighbors.has(to)) {
+                neighbors.set(to, []);
+            }
+            neighbors.get(from)?.push(to);
+            neighbors.get(to)?.push(from);
+        }
+    }
+    return neighbors;
 }

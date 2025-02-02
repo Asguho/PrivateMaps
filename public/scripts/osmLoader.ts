@@ -10,12 +10,7 @@ export class OsmLoader {
         this.edges = [];
     }
 
-    async load(
-        latStart: number,
-        lonStart: number,
-        latEnd: number,
-        lonEnd: number,
-    ) {
+    async load(latStart: number, lonStart: number, latEnd: number, lonEnd: number) {
         const result = await fetch(
             //"https://overpass-api.de/api/interpreter",
             'http://localhost:8000/api',
@@ -37,32 +32,14 @@ out geom;
         `),
             },
         ).then((data) => data.json());
-        let performanceStart = performance.now();
-        for (const point of result.points) {
+        const performanceStart = performance.now();
+        for (const point of result.graph.points) {
             this.points.push(new Point(point.id, point.lat, point.lon));
         }
-        for (const edge of result.edges) {
-            this.edges.push(
-                new Edge(
-                    edge.from,
-                    edge.to,
-                    edge.highway,
-                    edge.maxspeed,
-                    edge.name,
-                    edge.oneway,
-                    edge.junction,
-                ),
-            );
+        for (const edge of result.graph.edges) {
+            this.edges.push(new Edge(edge.id, edge.from, edge.to, edge.highway, edge.maxspeed, edge.name, edge.oneway, edge.junction));
         }
-        console.log(
-            'Loaded',
-            this.points.length,
-            'points and',
-            this.edges.length,
-            'edges in ',
-            performance.now() - performanceStart,
-            'ms',
-        );
-        return new Graph(this.points, this.edges);
+        console.log('Loaded', this.points.length, 'points and', this.edges.length, 'edges in ', performance.now() - performanceStart, 'ms');
+        return new Graph(this.points, this.edges); //, result.neighbors
     }
 }

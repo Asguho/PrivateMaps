@@ -39,9 +39,9 @@ out geom;
         for (const edge of result.graph.edges) {
             this.edges.push(new Edge(edge.id, edge.from, edge.to, edge.highway, edge.maxspeed, edge.name, edge.oneway, edge.junction));
         }
-        const neighborsMap = new Map<number, number[]>();
+        const neighborsMap = new Map<number, Point[]>();
         for (const [key, value] of Object.entries(result.neighbors)) {
-            neighborsMap.set(Number(key), value as number[]);
+            neighborsMap.set(Number(key), value as Point[]);
         }
         console.log('Loaded', this.points.length, 'points and', this.edges.length, 'edges in ', performance.now() - performanceStart, 'ms');
 

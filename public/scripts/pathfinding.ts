@@ -3,6 +3,7 @@ import { Djikstra } from './djikstra.ts';
 import { Graph } from './graph.ts';
 import { Point } from './point.ts';
 import { Path } from './path.ts';
+import exp from 'node:constants';
 
 export class PathFinding {
     graph: Graph;
@@ -36,7 +37,8 @@ export class PathFinding {
     run() {
         this.aStar = new aStar(this.graph, this.start, this.end);
         // this.djikstra = new Djikstra(this.graph, this.start, this.end);k
-        const aStarPath = this.aStar.run();
+        const { path: aStarPath, closedList } = this.aStar.run();
+        console.log('A* path:', aStarPath);
         //const djikstraPath = this.djikstra.run();
         /*
         console.log("A* path:", aStarPath);
@@ -68,10 +70,11 @@ export class PathFinding {
                 algorithm: 'A*',
                 distance: aStarDistance,
                 time: aStarTime,
+                explored: closedList,
             };
         } else {
             console.error('One of the paths is null');
-            return null;
+            return { bestPath: null, explored: closedList };
         }
     }
 }

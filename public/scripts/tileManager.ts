@@ -28,7 +28,7 @@ export class TileManager {
             }
         }
 
-        console.log(`Amount of tiles rendered: ${amountOfTilesRendered}`);
+        // console.log(`Amount of tiles rendered: ${amountOfTilesRendered}`);
     }
 
     async loadTileAsync(lat: number, lon: number, viewport: Viewport) {
@@ -58,7 +58,7 @@ export class TileManager {
     }
 
     determineTilesInView(viewport: Viewport) {
-        console.log('Determine tiles in view');
+        // console.log('Determine tiles in view');
         const start = new Date().getTime();
         const { minLat, maxLat, minLon, maxLon } = viewport.getGeoBounds();
 
@@ -86,7 +86,7 @@ export class TileManager {
         this.unloadedTiles = [];
 
         const end = new Date().getTime();
-        console.log(`Determine tiles in view = ${amountOfTilesProcessed}: ${end - start}ms`);
+        // console.log(`Determine tiles in view = ${amountOfTilesProcessed}: ${end - start}ms`);
         return; // Removed unused 'tiles' variable
     }
 
@@ -94,7 +94,7 @@ export class TileManager {
         const start = new Date().getTime();
         const points = [];
         const edges = [];
-        const neighbors = new Map<number, number[]>();
+        const neighbors = new Map();
 
         for (const graph of graphs) {
             points.push(...graph.points);

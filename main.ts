@@ -3,7 +3,7 @@ import { crypto } from 'jsr:@std/crypto';
 
 const CACHE_PATH = '.cache/cachedTiles.txt';
 const FETCH_URL = 'https://overpass-api.de/api/interpreter';
-const PROGRAM_VERSION = '0.2.2';
+const PROGRAM_VERSION = '0.3.0';
 
 let cachedResponses: string[] = [];
 try {
@@ -32,8 +32,10 @@ Deno.serve(async (request: Request) => {
 
         if (!cacheResponse) {
             const result = await fetch(req).then((res) => res.json());
-            console.log(result);
-            const response = JSON.stringify({ graph: convertToGraphData(result), neighbors: Object.fromEntries(getNeighbors(result)) });
+            const graph = convertToGraphData(result);
+            const neighbors = getNeighborsFromEdges(graph.edges);
+
+            const response = JSON.stringify({ graph, neighbors: Object.fromEntries(neighbors) });
             addToCache(hashHex, response);
             console.log('SERVED FROM WEB: ' + hashHex + ' in ' + (performance.now() - startServeTime) + 'ms');
             return new Response(response, { headers });
@@ -130,9 +132,12 @@ function isCarAllowedBasedOnType(type: string): boolean {
 }
 
 function getNeighbors(data: any) {
-    const neighbors = new Map<number, number[]>();
-    console.log(data.elements.forEach((element: any) => element.tags.highway));
-    const ways = data.elements.filter((element: any) => element.type === 'way' && isCarAllowedBasedOnType(element.tags.highway));
+    const neighbors = new Map<number, Point[]>();
+    // console.log(data.elements.forEach((element: any) => element.tags.highway));
+    const ways = data.elements.filter((element: any) =>
+        element.type === 'way' && isCarAllowedBasedOnType(element.tags.highway) && !(element.tags.oneway == 'yes') &&
+        !(element.tags.junction == 'roundabout')
+    );
     // oneway junction
     for (const way of ways) {
         for (let i = 0; i < way.nodes.length - 1; i++) {
@@ -144,9 +149,24 @@ function getNeighbors(data: any) {
             if (!neighbors.has(to)) {
                 neighbors.set(to, []);
             }
-            neighbors.get(from)?.push(to);
-            neighbors.get(to)?.push(from);
+            neighbors.get(from)?.push({ id: to, lat: way.geometry[i + 1].lat, lon: way.geometry[i + 1].lon });
+            neighbors.get(to)?.push({ id: from, lat: way.geometry[i].lat, lon: way.geometry[i].lon });
         }
+    }
+    return neighbors;
+}
+function getNeighborsFromEdges(edges: Edge[]) {
+    const neighbors = new Map<number, Point[]>();
+    const filteredEdges = edges.filter((edge) => isCarAllowedBasedOnType(edge.highway) && !edge.oneway && !edge.junction);
+    for (const edge of filteredEdges) {
+        if (!neighbors.has(edge.from.id)) {
+            neighbors.set(edge.from.id, []);
+        }
+        if (!neighbors.has(edge.to.id)) {
+            neighbors.set(edge.to.id, []);
+        }
+        neighbors.get(edge.from.id)?.push(edge.to);
+        neighbors.get(edge.to.id)?.push(edge.from);
     }
     return neighbors;
 }

@@ -26,8 +26,8 @@ export class aStar extends Algo {
             this.distances.get(point1.id)?.set(point2.id, travelTime);
             this.distances.get(point2.id)?.set(point1.id, travelTime);
         });
-        this.avgSpeed = 55; //this.getWeightedAverageSpeed();
-        //console.log('Average speed:', this.avgSpeed);
+        this.avgSpeed = this.getWeightedAverageSpeed();
+        console.log('Average speed:', this.avgSpeed);
     }
 
     popOpen() {
@@ -44,6 +44,7 @@ export class aStar extends Algo {
 
     run() {
         console.log(this.start, this.end);
+        console.log('ends neightbors:', this.graph.neighbors.get(this.end.id));
         const startNode = new AStarNode(this.start, null, 0, this.heuristic(this.start, this.end));
         this.openList.insert(startNode);
         console.log('Start node:', startNode.f === startNode.g + startNode.h);
@@ -54,14 +55,19 @@ export class aStar extends Algo {
             }
             if (currentNode.id === this.end.id) {
                 this.currentPath = this.reconstructPath(currentNode);
-                return this.currentPath;
+                console.log('Path:', this.currentPath);
+                return { path: this.currentPath, closedList: this.closedList };
             }
             this.addClosed(currentNode);
 
             const neighbors = this.getNeighbors(currentNode);
+            console.log('Neighbors:', neighbors.length);
             //   console.log('Neighbors:', neighbors.length, neighbors);
             for (const neighbor of neighbors) {
-                if (this.isInClosed(neighbor)) continue;
+                if (this.isInClosed(neighbor)) {
+                    console.log('is in closed list');
+                    continue;
+                }
 
                 const distance = this.getDistance(currentNode, neighbor);
 
@@ -77,8 +83,8 @@ export class aStar extends Algo {
                 }
             }
         }
-
-        return null;
+        console.error('No path found');
+        return { path: null, closedList: this.closedList };
     }
 
     getDistance(point1: Point, point2: Point): number | null {

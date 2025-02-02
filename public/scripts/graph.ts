@@ -5,8 +5,8 @@ import { Viewport } from './viewport.ts';
 export class Graph {
     points: Point[];
     edges: Edge[];
-    neighbors: Map<number, number[]>;
-    constructor(points: Point[] = [], edges: Edge[] = [], neighbors: Map<number, number[]> = new Map()) {
+    neighbors: Map<number, Point[]>;
+    constructor(points: Point[] = [], edges: Edge[] = [], neighbors: Map<number, Point[]> = new Map()) {
         this.points = points;
         this.edges = edges;
         this.neighbors = neighbors;
@@ -51,23 +51,24 @@ export class Graph {
 
     placePointOnEdge(lat: number, lon: number) {
         const { edge, closest } = this.nearestEdge(lat, lon);
-        console.log(edge);
+        // console.log('closets', );
+        // console.log(edge);
 
-        // @ts-ignore edge is not null but wth
-        const { point1, point2 } = edge;
+        // // @ts-ignore edge is not null but wth
+        // const { point1, point2 } = edge;
 
-        // @ts-ignore closest is not null but wth
-        const newPoint = new Point(this.points.length + 1, closest.y, closest.x);
-        console.log(newPoint);
-        this.addPoint(newPoint);
+        // // @ts-ignore closest is not null but wth
+        // const newPoint = new Point(this.points.length + 1, closest.y, closest.x);
+        // console.log(newPoint);
+        // this.addPoint(newPoint);
 
-        this.edges = this.edges.filter((e) => e !== edge);
-        // @ts-ignore edge is not null but wth
-        this.addEdge(new Edge(edge.id, point1, newPoint, edge.type, edge.maxSpeed, edge.streetName, edge.oneway, edge.junction));
-        // @ts-ignore edge is not null but wth
-        this.addEdge(new Edge(edge.id, newPoint, point2, edge.type, edge.maxSpeed, edge.streetName, edge.oneway, edge.junction));
+        // this.edges = this.edges.filter((e) => e !== edge);
+        // // @ts-ignore edge is not null but wth
+        // this.addEdge(new Edge(edge.id, point1, newPoint, edge.type, edge.maxSpeed, edge.streetName, edge.oneway, edge.junction));
+        // // @ts-ignore edge is not null but wth
+        // this.addEdge(new Edge(edge.id, newPoint, point2, edge.type, edge.maxSpeed, edge.streetName, edge.oneway, edge.junction));
 
-        return newPoint;
+        return edge.point1;
     }
     distanceToSegment(pt: { x: number; y: number }, p1: { x: number; y: number }, p2: { x: number; y: number }) {
         let closest = { x: 0, y: 0 };

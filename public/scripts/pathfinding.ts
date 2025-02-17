@@ -4,6 +4,7 @@ import { Graph } from "./graph.ts";
 import { Point } from "./point.ts";
 import { Path } from "./path.ts";
 import { TileManager } from "./tileManager.ts";
+import { AStarNode } from "./algo.ts";
 
 export class PathFinding {
 	graph: Graph;
@@ -31,21 +32,32 @@ export class PathFinding {
 		return totalDistance;
 	}
 
-	run(tm: TileManager) {
+	async run(tm: TileManager) {
 		this.aStar = new aStar(this.graph, this.start, this.end);
 		// this.end snapper til nærmeste tile også hvis den tilhører tile ikke er loeded
 		//todo
-		//load end tile
+		//load end tile DONE
 		//fix find nearest tile to find last explored node and find nearest tile to that node
 		//then loop with a star until end is found or time limit is reached
 		//also async run() func
 		//HAPPY DAYS
-		const { path, closedList } = this.aStar.run(tm);
-		if (!path) {
-			const p = this.end;
-			if (!p) return { bestPath: null, explored: closedList };
-			tm.loadNearestTile(p);
+		const MAX_TRIES = 100;
+		let tries = 0;
+		let path, closedList;
+		while (tries < MAX_TRIES) {
+			({ path, closedList } = this.aStar.run(tm));
+			if (!path) {
+				const p = this.FindElementClosestToEnd(closedList, this.end);
+				if (!p) return { bestPath: null, explored: closedList };
+				console.log("Last explored node:", p);
+				this.graph = await tm.loadNearestTile(p);
+				this.aStar = new aStar(this.graph, this.start, this.end);
+			} else {
+				break;
+			}
+			tries++;
 		}
+		console.log("Path found at try:", tries, path);
 		if (path) {
 			const aStarTime = this.calculateTravelTime(path, this.aStar.distances);
 			const aStarDistance = path.calculateTotalDistance();
@@ -63,11 +75,16 @@ export class PathFinding {
 		}
 	}
 
-	getLastElement(s: Set<Point>): Point | null {
-		let lastElement = null;
-		s.forEach((element) => {
-			lastElement = element;
-		});
-		return lastElement;
+	FindElementClosestToEnd(s: Set<AStarNode>, end: Point): AStarNode | null {
+		let minDistance = Number.MAX_VALUE;
+		let closestNode = null;
+		for (const node of s) {
+			const distance = Math.hypot(node.lat - end.lat, node.lon - end.lon);
+			if (distance < minDistance) {
+				minDistance = distance;
+				closestNode = node;
+			}
+		}
+		return closestNode;
 	}
 }

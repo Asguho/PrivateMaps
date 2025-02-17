@@ -12,7 +12,7 @@
 		<div class="controls">
 			<h1>Private Maps</h1>
 			<input id="start" type="text" placeholder="Enter start location" value="niels finsens alle 65" />
-			<input id="end" type="text" placeholder="Enter end location" value="paul fennebergs alle 20" />
+			<input id="end" type="text" placeholder="Enter end location" value="Ahornstien 8" />
 			<button id="Run">Find Shortest Path</button>
 			<!--distance and time if available insert as p tag here-->
 			<p id="distance"></p>
@@ -151,6 +151,16 @@
 					console.log("Start Coords:", startCoords);
 					console.log("End Coords:", endCoords);
 
+					// Ensure startCoords and endCoords are defined before using them
+					if (!startCoords || !endCoords) {
+						throw new Error("Start and end coordinates must be defined");
+					}
+
+					console.log("Ensuring tiles are loaded", startCoords, endCoords);
+
+					await tileManager.ensureTileContainingPointIsLoaded(startCoords.y, startCoords.x);
+					await tileManager.ensureTileContainingPointIsLoaded(endCoords.y, endCoords.x);
+
 					const graph = tileManager.mergeGraph(tileManager.getAllTileGraphs());
 
 					const startpoint = graph.placePointOnEdge(startCoords.y, startCoords.x);
@@ -165,7 +175,8 @@
 					const pathfinding = new PathFinding(graph, startpoint, endpoint);
 					console.log("Running PathFinding from", startpoint, "to", endpoint);
 
-					const result = pathfinding.run(tileManager);
+					const result = await pathfinding.run(tileManager);
+					console.log("PathFinding result:", result);
 					const path = result?.bestPath;
 					const distanceInKm = result?.distance / 1000;
 					const timeInMinutes = result?.time / 60;

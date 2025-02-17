@@ -33,7 +33,7 @@ export class TileManager {
 		}
 	}
 
-	async loadTileAsync(lat: number, lon: number, viewport: Viewport) {
+	async loadTileAsync(lat: number, lon: number, _viewport: Viewport) {
 		// Align lat and lon to the tile grid
 		const alignedLat = Math.floor(lat / this.tileSize) * this.tileSize;
 		const alignedLon = Math.floor(lon / this.tileSize) * this.tileSize;
@@ -51,7 +51,7 @@ export class TileManager {
 		const tileLonEnd = alignedLon + this.tileSize;
 
 		const tile = new Tile(tileLatStart, tileLonStart, tileLatEnd, tileLonEnd);
-		await tile.loadTileAsync().then((graph) => {
+		await tile.loadTileAsync().then((_graph) => {
 			console.log("Tile loaded");
 			//viewport.triggerRedraw();
 		});
@@ -61,7 +61,7 @@ export class TileManager {
 
 	determineTilesInView(viewport: Viewport) {
 		// console.log('Determine tiles in view');
-		const start = new Date().getTime();
+		const _start = new Date().getTime();
 		const { minLat, maxLat, minLon, maxLon } = viewport.getGeoBounds();
 
 		const latStart = Math.floor(minLat / this.tileSize) * this.tileSize;
@@ -87,7 +87,7 @@ export class TileManager {
 		Promise.all(promises);
 		this.unloadedTiles = [];
 
-		const end = new Date().getTime();
+		const _end = new Date().getTime();
 		// console.log(`Determine tiles in view = ${amountOfTilesProcessed}: ${end - start}ms`);
 		return; // Removed unused 'tiles' variable
 	}
@@ -130,11 +130,28 @@ export class TileManager {
 		// Helper: Euclidean distance in degrees
 		const distance = (lat1: number, lon1: number, lat2: number, lon2: number) => Math.hypot(lat2 - lat1, lon2 - lon1);
 
-		// Create a local candidates array from this.unloadedTiles that are not loaded yet.
-		const candidateTiles = this.unloadedTiles.filter((tile) => {
-			const tileKey = `${tile.lat},${tile.lon}`;
-			return !this.tiles.has(tileKey);
-		});
+		//go out in a spiral from p and find the nearest tile that in NOT loaded
+		const candidateTiles = [];
+		let lat = p.lat;
+		let lon = p.lon;
+		let radius = 0;
+		while (candidateTiles.length === 0) {
+			for (let i = -radius; i <= radius; i++) {
+				for (let j = -radius; j <= radius; j++) {
+					if (Math.abs(i) === radius || Math.abs(j) === radius) {
+						const latCandidate = Math.floor(lat / this.tileSize) * this.tileSize + i * this.tileSize;
+						const lonCandidate = Math.floor(lon / this.tileSize) * this.tileSize + j * this.tileSize;
+						const tileKey = `${latCandidate},${lonCandidate}`;
+						if (!this.tiles.has(tileKey)) {
+							candidateTiles.push({ lat: latCandidate, lon: lonCandidate });
+						}
+					}
+				}
+			}
+			radius++;
+		}
+
+		console.log("Candidate tiles:", candidateTiles);
 
 		if (candidateTiles.length > 0) {
 			// Find the candidate tile with center closest to p
@@ -151,16 +168,29 @@ export class TileManager {
 			if (!this.tiles.has(tileKey)) {
 				await this.loadTileAsync(nearest.lat, nearest.lon, this.viewport);
 			}
-			return this.tiles.get(tileKey)?.getGraph() ?? new Graph();
-		}
+			let newGraph = this.tiles.get(tileKey)?.getGraph();
+			if (!newGraph) {
+				newGraph = new Graph();
+			}
+			// merge with existing graph
+			const existingGraphs = this.getAllTileGraphs();
 
-		// Fallback: align p to grid
-		const alignedLat = Math.floor(p.lat / this.tileSize) * this.tileSize;
-		const alignedLon = Math.floor(p.lon / this.tileSize) * this.tileSize;
+			// @ts-ignore fuck you
+			return this.mergeGraph([newGraph, ...existingGraphs]);
+		}
+		return new Graph();
+	}
+
+	async ensureTileContainingPointIsLoaded(lat: number, lon: number): Promise<void> {
+		const alignedLat = Math.floor(lat / this.tileSize) * this.tileSize;
+		const alignedLon = Math.floor(lon / this.tileSize) * this.tileSize;
 		const tileKey = `${alignedLat},${alignedLon}`;
 		if (!this.tiles.has(tileKey)) {
+			console.log("Tile not loaded, loading tile");
 			await this.loadTileAsync(alignedLat, alignedLon, this.viewport);
+		} else {
+			console.log("Tile already loaded");
 		}
-		return this.tiles.get(tileKey)?.getGraph() ?? new Graph();
+		return;
 	}
 }

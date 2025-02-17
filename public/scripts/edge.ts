@@ -35,10 +35,6 @@ export class Edge {
         this.junction = junction;
     }
 
-    /**
-     * Returns a hex color string for the given road type, using a Google-inspired palette.
-     * Note: The lightest roads now use a light gray (#d3d3d3) so they remain visible on a white background.
-     */
     getColorBasedOnType(type: string): string {
         const roadColors: { [key: string]: string } = {
             // Major roads
@@ -60,13 +56,9 @@ export class Edge {
             steps: '#c0c0c0',
         };
 
-        // Return the mapped color, defaulting to light gray if the type is not found.
         return roadColors[type] ?? '#d3d3d3';
     }
 
-    /**
-     * Determines if a given road type allows cars.
-     */
     isCarAllowedBasedOnType(type: string): boolean {
         if (
             type === 'pedestrian' ||
@@ -82,10 +74,6 @@ export class Edge {
         return true;
     }
 
-    /**
-     * Returns the minimum viewport.scale (zoom level) required to render a road based on its type.
-     * Major roads appear at lower zoom levels, while minor roads only show up when zoomed in.
-     */
     getMinZoomBasedOnType(type: string): number {
         const zoomLevels: { [key: string]: number } = {
             motorway: 0,
@@ -106,10 +94,6 @@ export class Edge {
         return zoomLevels[type] ?? 12000;
     }
 
-    /**
-     * Draws the road edge onto the canvas using the provided viewport.
-     * The method adjusts both the level-of-detail (LOD) and the line width based on the zoom level.
-     */
     draw(ctx: CanvasRenderingContext2D, viewport: Viewport): void {
         // Check if we should render this road at the current zoom level.
         const minZoom = this.getMinZoomBasedOnType(this.type);

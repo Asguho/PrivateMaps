@@ -39,7 +39,6 @@ export class Path {
         return totalDistance;
     }
     distance(node: Point, goal: Point) {
-        // Haversine heuristic
         const R = 6371e3;
         const [lat1, lon1] = [node.lat, node.lon];
         const [lat2, lon2] = [goal.lat, goal.lon];

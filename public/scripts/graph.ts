@@ -51,23 +51,6 @@ export class Graph {
 
     placePointOnEdge(lat: number, lon: number) {
         const { edge, closest } = this.nearestEdge(lat, lon);
-        // console.log('closets', );
-        // console.log(edge);
-
-        // // @ts-ignore edge is not null but wth
-        // const { point1, point2 } = edge;
-
-        // // @ts-ignore closest is not null but wth
-        // const newPoint = new Point(this.points.length + 1, closest.y, closest.x);
-        // console.log(newPoint);
-        // this.addPoint(newPoint);
-
-        // this.edges = this.edges.filter((e) => e !== edge);
-        // // @ts-ignore edge is not null but wth
-        // this.addEdge(new Edge(edge.id, point1, newPoint, edge.type, edge.maxSpeed, edge.streetName, edge.oneway, edge.junction));
-        // // @ts-ignore edge is not null but wth
-        // this.addEdge(new Edge(edge.id, newPoint, point2, edge.type, edge.maxSpeed, edge.streetName, edge.oneway, edge.junction));
-
         return edge.point1;
     }
     distanceToSegment(pt: { x: number; y: number }, p1: { x: number; y: number }, p2: { x: number; y: number }) {

@@ -3,7 +3,6 @@ import { Djikstra } from './djikstra.ts';
 import { Graph } from './graph.ts';
 import { Point } from './point.ts';
 import { Path } from './path.ts';
-import exp from 'node:constants';
 
 export class PathFinding {
     graph: Graph;
@@ -36,34 +35,13 @@ export class PathFinding {
 
     run() {
         this.aStar = new aStar(this.graph, this.start, this.end);
-        // this.djikstra = new Djikstra(this.graph, this.start, this.end);k
         const { path: aStarPath, closedList } = this.aStar.run();
-        console.log('A* path:', aStarPath);
-        //const djikstraPath = this.djikstra.run();
-        /*
-        console.log("A* path:", aStarPath);
-        console.log("Djikstra path:", djikstraPath);
-        console.log("A* distances:", this.aStar.distances);
-        console.log("Djikstra distances:", this.djikstra.distances);
-        */
-        //if (aStarPath && djikstraPath) {
         if (aStarPath) {
             const aStarTime = this.calculateTravelTime(
                 aStarPath,
                 this.aStar.distances,
             );
-            //const djikstraTime = this.calculateTravelTime(djikstraPath, this.djikstra.distances);
             const aStarDistance = aStarPath.calculateTotalDistance();
-            //const djikstraDistance = djikstraPath.calculateTotalDistance();
-            //console.log(`A* distance: ${aStarDistance}, Djikstra distance: ${djikstraDistance}`);
-            //console.log(`A* time: ${aStarTime}, Djikstra time: ${djikstraTime}`);
-            /*
-      if (aStarDistance <= djikstraDistance) {
-        return { bestPath: aStarPath, algorithm: 'A*' };
-      } else {
-        return { bestPath: djikstraPath, algorithm: 'Djikstra' };
-      }
-        */
             console.log(`A* distance: ${aStarDistance}, A* time: ${aStarTime}`);
             return {
                 bestPath: aStarPath,

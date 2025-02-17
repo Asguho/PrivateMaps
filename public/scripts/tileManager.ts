@@ -12,7 +12,6 @@ export class TileManager {
     constructor(viewport: Viewport) {
         this.viewport = viewport;
         this.unloadedTiles = [];
-        // Use a Map for faster tile lookups
         this.tiles = new Map();
         this.tileSize = 0.03;
     }
@@ -20,15 +19,12 @@ export class TileManager {
     draw(ctx: CanvasRenderingContext2D, viewport: Viewport) {
         const { minLat, maxLat, minLon, maxLon } = viewport.getGeoBounds();
         let amountOfTilesRendered = 0;
-        // Iterate over Map values
         for (const tile of this.tiles.values()) {
             if (tile.tileLatEnd >= minLat && tile.tileLatStart <= maxLat && tile.tileLonEnd >= minLon && tile.tileLonStart <= maxLon) {
                 amountOfTilesRendered++;
                 tile.draw(ctx, viewport);
             }
         }
-
-        // console.log(`Amount of tiles rendered: ${amountOfTilesRendered}`);
     }
 
     async loadTileAsync(lat: number, lon: number, viewport: Viewport) {

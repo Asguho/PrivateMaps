@@ -1,214 +1,191 @@
 <!DOCTYPE html>
 <html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Private Maps</title>
+		<link rel="stylesheet" href="styles/styles.css" />
+	</head>
 
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Private Maps</title>
-    <link rel="stylesheet" href="styles/styles.css" />
-</head>
+	<body>
+		<canvas id="mapCanvas"></canvas>
+		<div class="controls">
+			<h1>Private Maps</h1>
+			<input id="start" type="text" placeholder="Enter start location" value="niels finsens alle 65" />
+			<input id="end" type="text" placeholder="Enter end location" value="paul fennebergs alle 20" />
+			<button id="Run">Find Shortest Path</button>
+			<!--distance and time if available insert as p tag here-->
+			<p id="distance"></p>
+			<p id="time"></p>
+		</div>
 
-<body>
-    <canvas id="mapCanvas"></canvas>
-    <div class="controls">
-        <h1>Private Maps</h1>
-        <input id="start" type="text" placeholder="Enter start location" value="niels finsens alle 65" />
-        <input id="end" type="text" placeholder="Enter end location" value="paul findingsberg alle 20" />
-        <button id="Run">Find Shortest Path</button>
-        <!--distance and time if available insert as p tag here-->
-        <p id="distance"></p>
-        <p id="time"></p>
-    </div>
+		<script type="module">
+			import { Point } from "./scripts/point.ts";
+			import { Edge } from "./scripts/edge.ts";
+			import { Graph } from "./scripts/graph.ts";
+			import { OsmLoader } from "./scripts/osmLoader.ts";
+			import { Viewport } from "./scripts/viewport.ts";
+			import { Path } from "./scripts/path.ts";
+			import { PathFinding } from "./scripts/pathfinding.ts";
+			import { TileManager } from "./scripts/tileManager.ts";
+			import { geoCoder } from "./scripts/geoCoder.ts";
+			import { Pin } from "./scripts/pin.ts";
 
-    <script type="module">
-        import { Point } from './scripts/point.ts';
-        import { Edge } from './scripts/edge.ts';
-        import { Graph } from './scripts/graph.ts';
-        import { OsmLoader } from './scripts/osmLoader.ts';
-        import { Viewport } from './scripts/viewport.ts';
-        import { Path } from './scripts/path.ts';
-        import { PathFinding } from './scripts/pathfinding.ts';
-        import { TileManager } from './scripts/tileManager.ts';
-        import { geoCoder } from './scripts/geoCoder.ts';
-        import { Pin } from './scripts/pin.ts';
+			let startPin = new Pin("A", 0, 0, false);
+			let endPin = new Pin("B", 0, 0, false);
 
-        let startPin = new Pin('A', 0, 0, false);
-        let endPin = new Pin('B', 0, 0, false);
+			const mapCanvas = document.getElementById("mapCanvas");
+			mapCanvas.width = window.innerWidth;
+			mapCanvas.height = window.innerHeight;
 
-        const mapCanvas = document.getElementById('mapCanvas');
-        mapCanvas.width = window.innerWidth;
-        mapCanvas.height = window.innerHeight;
+			window.addEventListener("resize", () => {
+				mapCanvas.width = window.innerWidth;
+				mapCanvas.height = window.innerHeight;
+				throttleRender();
+			});
 
-        window.addEventListener('resize', () => {
-            mapCanvas.width = window.innerWidth;
-            mapCanvas.height = window.innerHeight;
-            throttleRender();
-        });
+			const ctx = mapCanvas.getContext("2d");
+			const viewport = new Viewport(mapCanvas);
+			var fpath = null;
+			var explored = null;
 
-        const ctx = mapCanvas.getContext('2d');
-        const viewport = new Viewport(mapCanvas);
-        var fpath = null;
-        var explored = null;
+			var startCoords;
+			var endCoords;
 
-        var startCoords;
-        var endCoords;
+			//const tile = new Tile(55.729562, 12.490795, 55.74636, 12.515606);
+			const tileManager = new TileManager(viewport);
+			viewport.setOffset(-6412933.175949172, -1140876.2422314237);
+			viewport.setScale(33316.74141999862);
+			tileManager.determineTilesInView(viewport);
 
-        //const tile = new Tile(55.729562, 12.490795, 55.74636, 12.515606);
-        const tileManager = new TileManager(viewport);
-        viewport.setOffset(-6412933.175949172, -1140876.2422314237);
-        viewport.setScale(33316.74141999862);
-        tileManager.determineTilesInView(viewport);
+			function render() {
+				// console.log('Rendering');
+				ctx.clearRect(0, 0, mapCanvas.width, mapCanvas.height);
+				tileManager.draw(ctx, viewport);
+				if (explored) {
+					ctx.strokeStyle = "rgba(255, 0, 0, 0.5)";
+					ctx.lineWidth = 2;
+					ctx.beginPath();
+					for (const point of explored) {
+						//const screenPoint = viewport.geoToCanvas(point.lat, point.lon);
+						//ctx.moveTo(screenPoint.x, screenPoint.y);
+						//ctx.arc(screenPoint.x, screenPoint.y, 2, 0, 2 * Math.PI);
+					}
+					ctx.stroke();
+				}
+				if (fpath) {
+					fpath.draw(ctx, viewport);
+				}
 
-        function render() {
-            // console.log('Rendering');
-            ctx.clearRect(0, 0, mapCanvas.width, mapCanvas.height);
-            tileManager.draw(ctx, viewport);
-            if (explored) {
-                ctx.strokeStyle = 'rgba(255, 0, 0, 0.5)';
-                ctx.lineWidth = 2;
-                ctx.beginPath();
-                for (const point of explored) {
-                    //const screenPoint = viewport.geoToCanvas(point.lat, point.lon);
-                    //ctx.moveTo(screenPoint.x, screenPoint.y);
-                    //ctx.arc(screenPoint.x, screenPoint.y, 2, 0, 2 * Math.PI);
-                }
-                ctx.stroke();
-            }
-            if (fpath) {
-                fpath.draw(ctx, viewport);
-            }
+				startPin.draw(ctx, viewport);
+				endPin.draw(ctx, viewport);
+			}
+			render();
 
-            startPin.draw(ctx, viewport);
-            endPin.draw(ctx, viewport);
-        }
-        render();
+			let renderTimeout;
 
-        let renderTimeout;
+			function throttleRender() {
+				if (!renderTimeout) {
+					renderTimeout = setTimeout(() => {
+						render();
+						renderTimeout = null;
+					}, 16); // Approximately 60fps
+				}
+			}
 
-        function throttleRender() {
-            if (!renderTimeout) {
-                renderTimeout = setTimeout(() => {
-                    render();
-                    renderTimeout = null;
-                }, 16); // Approximately 60fps
-            }
-        }
+			// rerund the rendering function every 0.5 seconds
+			setInterval(async () => {
+				if (!isDragging) {
+					throttleRender();
+					tileManager.determineTilesInView(viewport);
+				}
+			}, 1000);
 
-        // rerund the rendering function every 0.5 seconds
-        setInterval(async () => {
-            if (!isDragging) {
-                throttleRender();
-                tileManager.determineTilesInView(viewport);
-            }
-        }, 1000);
+			// Mouse events for panning
+			let isDragging = false;
+			let lastX = 0,
+				lastY = 0;
 
-        // Mouse events for panning
-        let isDragging = false;
-        let lastX = 0,
-            lastY = 0;
+			mapCanvas.addEventListener("mousedown", (e) => {
+				isDragging = true;
+				lastX = e.clientX;
+				lastY = e.clientY;
+			});
 
-        mapCanvas.addEventListener('mousedown', (e) => {
-            isDragging = true;
-            lastX = e.clientX;
-            lastY = e.clientY;
-        });
+			mapCanvas.addEventListener("mousemove", (e) => {
+				if (!isDragging) return;
+				const dx = e.clientX - lastX;
+				const dy = e.clientY - lastY;
+				viewport.pan(dx, dy);
+				lastX = e.clientX;
+				lastY = e.clientY;
+				throttleRender();
+			});
 
-        mapCanvas.addEventListener('mousemove', (e) => {
-            if (!isDragging) return;
-            const dx = e.clientX - lastX;
-            const dy = e.clientY - lastY;
-            viewport.pan(dx, dy);
-            lastX = e.clientX;
-            lastY = e.clientY;
-            throttleRender();
-        });
+			mapCanvas.addEventListener("mouseup", () => {
+				isDragging = false;
+			});
 
-        mapCanvas.addEventListener('mouseup', () => {
-            isDragging = false;
-        });
+			// Wheel event for zoom
+			mapCanvas.addEventListener(
+				"wheel",
+				(e) => {
+					e.preventDefault();
+					const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
+					viewport.zoom(zoomFactor);
+					render();
+				},
+				{ passive: false }
+			);
 
-        // Wheel event for zoom
-        mapCanvas.addEventListener(
-            'wheel',
-            (e) => {
-                e.preventDefault();
-                const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
-                viewport.zoom(zoomFactor);
-                render();
-            },
-            { passive: false },
-        );
+			const runButton = document.getElementById("Run");
+			runButton.addEventListener("click", async () => {
+				document.getElementById("distance").textContent = "";
+				document.getElementById("time").textContent = "";
+				const start = document.getElementById("start").value;
+				const end = document.getElementById("end").value;
+				const geocoder = new geoCoder();
+				try {
+					const [startCoords, endCoords] = await Promise.all([geocoder.run(start), geocoder.run(end)]);
 
-        const runButton = document.getElementById('Run');
-        runButton.addEventListener('click', async () => {
-            document.getElementById('distance').textContent = '';
-            document.getElementById('time').textContent = '';
-            const start = document.getElementById('start').value;
-            const end = document.getElementById('end').value;
-            const geocoder = new geoCoder();
-            try {
-                const [startCoords, endCoords] = await Promise.all([
-                    geocoder.run(start),
-                    geocoder.run(end),
-                ]);
+					console.log("Start Coords:", startCoords);
+					console.log("End Coords:", endCoords);
 
-                console.log('Start Coords:', startCoords);
-                console.log('End Coords:', endCoords);
+					const graph = tileManager.mergeGraph(tileManager.getAllTileGraphs());
 
-                const graph = tileManager.mergeGraph(
-                    tileManager.getAllTileGraphs(),
-                );
+					const startpoint = graph.placePointOnEdge(startCoords.y, startCoords.x);
+					const endpoint = graph.placePointOnEdge(endCoords.y, endCoords.x);
 
-                const startpoint = graph.placePointOnEdge(
-                    startCoords.y,
-                    startCoords.x,
-                );
-                const endpoint = graph.placePointOnEdge(
-                    endCoords.y,
-                    endCoords.x,
-                );
+					console.log("Startpoint:", startpoint);
+					console.log("Endpoint:", endpoint);
 
-                console.log('Startpoint:', startpoint);
-                console.log('Endpoint:', endpoint);
+					startPin.setLatLon(startpoint.lat, startpoint.lon);
+					endPin.setLatLon(endpoint.lat, endpoint.lon);
 
-                startPin.setLatLon(startpoint.lat, startpoint.lon);
-                endPin.setLatLon(endpoint.lat, endpoint.lon);
+					const pathfinding = new PathFinding(graph, startpoint, endpoint);
+					console.log("Running PathFinding from", startpoint, "to", endpoint);
 
-                const pathfinding = new PathFinding(
-                    graph,
-                    startpoint,
-                    endpoint,
-                );
-                console.log(
-                    'Running PathFinding from',
-                    startpoint,
-                    'to',
-                    endpoint,
-                );
+					const result = pathfinding.run();
+					const path = result?.bestPath;
+					const distanceInKm = result?.distance / 1000;
+					const timeInMinutes = result?.time / 60;
 
-                const result = pathfinding.run();
-                const path = result?.bestPath;
-                const distanceInKm = result?.distance / 1000;
-                const timeInMinutes = result?.time / 60;
+					document.getElementById("distance").textContent = `Distance: ${distanceInKm.toFixed(2)} km`;
+					document.getElementById("time").textContent = `Time: ${timeInMinutes.toFixed(0)} min`;
 
+					console.log("Pathfinding algorithm used:", result?.algorithm);
+					console.log("PathFinding path points:", path);
 
-                document.getElementById('distance').textContent = `Distance: ${distanceInKm.toFixed(2)} km`;
-                document.getElementById('time').textContent = `Time: ${timeInMinutes.toFixed(0)} min`;
+					//console.log("PathFinding path points:", pathPoints); // Add debugging here
+					fpath = path;
+					console.log("explored:", result.explored);
+					explored = result.explored;
+				} catch (e) {
+					console.log("Error:", e);
+				}
 
-                console.log('Pathfinding algorithm used:', result?.algorithm);
-                console.log('PathFinding path points:', path);
-
-                //console.log("PathFinding path points:", pathPoints); // Add debugging here
-                fpath = path;
-                console.log('explored:', result.explored);
-                explored = result.explored;
-            } catch (e) {
-                console.log('Error:', e);
-            }
-
-            render();
-        });
-    </script>
-</body>
-
+				render();
+			});
+		</script>
+	</body>
 </html>

@@ -25,9 +25,27 @@ const headers = {
 Deno.serve(async (request: Request) => {
     if (request.url.includes('/api')) {
         const startServeTime = performance.now();
-        const body = await request.text();
-        const req = new Request(FETCH_URL, { method: 'POST', body });
-        const hashHex = await generateHash(req.url + body + PROGRAM_VERSION);
+        const url = new URL(request.url);
+
+        const latStart = url.searchParams.get('latStart');
+        const lonStart = url.searchParams.get('lonStart');
+        const latEnd = url.searchParams.get('latEnd');
+        const lonEnd = url.searchParams.get('lonEnd');
+        const req = new Request(FETCH_URL, {
+            method: 'POST',
+            body: 'data=' +
+                encodeURIComponent(`
+[out:json][timeout:25];
+// gather results
+(
+  way["highway"](${latStart},${lonStart},${latEnd},${lonEnd});
+);
+// print results
+out geom;
+        `),
+        });
+
+        const hashHex = await generateHash(req.url + `${latStart},${lonStart},${latEnd},${lonEnd}` + PROGRAM_VERSION);
         const cacheResponse = await isCacheAvailable(hashHex);
 
         if (!cacheResponse) {

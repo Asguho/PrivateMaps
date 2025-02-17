@@ -126,16 +126,12 @@ export class TileManager {
 		return graphs;
 	}
 
-	async loadNearestTile(p: Point): Promise<Graph> {
-		// Helper: Euclidean distance in degrees
-		const distance = (lat1: number, lon1: number, lat2: number, lon2: number) => Math.hypot(lat2 - lat1, lon2 - lon1);
-
-		//go out in a spiral from p and find the nearest tile that in NOT loaded
+	async loadNearestTiles(p: Point, desparation: number): Promise<Graph> {
 		const candidateTiles = [];
 		let lat = p.lat;
 		let lon = p.lon;
 		let radius = 0;
-		while (candidateTiles.length === 0) {
+		while (candidateTiles.length <= 1 + desparation / 5) {
 			for (let i = -radius; i <= radius; i++) {
 				for (let j = -radius; j <= radius; j++) {
 					if (Math.abs(i) === radius || Math.abs(j) === radius) {
@@ -148,37 +144,19 @@ export class TileManager {
 					}
 				}
 			}
-			radius++;
+			console.log("Candidate tiles expand");
+			radius += this.tileSize;
 		}
 
 		console.log("Candidate tiles:", candidateTiles);
 
-		if (candidateTiles.length > 0) {
-			// Find the candidate tile with center closest to p
-			let nearest = candidateTiles[0];
-			let minDist = distance(p.lat, p.lon, nearest.lat + this.tileSize / 2, nearest.lon + this.tileSize / 2);
-			for (const tile of candidateTiles) {
-				const d = distance(p.lat, p.lon, tile.lat + this.tileSize / 2, tile.lon + this.tileSize / 2);
-				if (d < minDist) {
-					minDist = d;
-					nearest = tile;
-				}
-			}
-			const tileKey = `${nearest.lat},${nearest.lon}`;
-			if (!this.tiles.has(tileKey)) {
-				await this.loadTileAsync(nearest.lat, nearest.lon, this.viewport);
-			}
-			let newGraph = this.tiles.get(tileKey)?.getGraph();
-			if (!newGraph) {
-				newGraph = new Graph();
-			}
-			// merge with existing graph
-			const existingGraphs = this.getAllTileGraphs();
+		const loadPromises = candidateTiles.map((tile) => this.loadTileAsync(tile.lat, tile.lon, this.viewport));
+		await Promise.all(loadPromises);
 
-			// @ts-ignore fuck you
-			return this.mergeGraph([newGraph, ...existingGraphs]);
-		}
-		return new Graph();
+		// Merge with existing graphs
+		const existingGraphs = this.getAllTileGraphs();
+
+		return this.mergeGraph(existingGraphs.filter((graph) => graph !== null));
 	}
 
 	async ensureTileContainingPointIsLoaded(lat: number, lon: number): Promise<void> {

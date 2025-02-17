@@ -37,27 +37,38 @@ export class PathFinding {
 		// this.end snapper til nærmeste tile også hvis den tilhører tile ikke er loeded
 		//todo
 		//load end tile DONE
-		//fix find nearest tile to find last explored node and find nearest tile to that node
-		//then loop with a star until end is found or time limit is reached
-		//also async run() func
-		//HAPPY DAYS
+		//fix find nearest tile to find last explored node and find nearest tile to that node DONE
+		//then loop with a star until end is found or time limit is reached DONE
+		//also async run() func DONE
+		//HAPPY DAYS (NOT REALLY)
 		const MAX_TRIES = 100;
 		let tries = 0;
 		let path, closedList;
 		while (tries < MAX_TRIES) {
 			({ path, closedList } = this.aStar.run(tm));
 			if (!path) {
-				const p = this.FindElementClosestToEnd(closedList, this.end);
+				const p = this.FindElementWithLowestH(closedList);
 				if (!p) return { bestPath: null, explored: closedList };
 				console.log("Last explored node:", p);
-				this.graph = await tm.loadNearestTile(p);
+				this.graph = await tm.loadNearestTiles(p, tries);
 				this.aStar = new aStar(this.graph, this.start, this.end);
 			} else {
 				break;
 			}
 			tries++;
 		}
-		console.log("Path found at try:", tries, path);
+
+		/* //no-retry
+		const { path, closedList } = this.aStar.run(tm);
+		//console.log("Path found at try:", tries, path);
+		if (!path) {
+			const p = this.FindElementWithLowestH(closedList);
+			if (!p) return { bestPath: null, explored: closedList };
+			this.graph = await tm.loadNearestTile(p);
+		}
+		console.log("Path found", path);
+		//end */
+
 		if (path) {
 			const aStarTime = this.calculateTravelTime(path, this.aStar.distances);
 			const aStarDistance = path.calculateTotalDistance();
@@ -75,16 +86,17 @@ export class PathFinding {
 		}
 	}
 
-	FindElementClosestToEnd(s: Set<AStarNode>, end: Point): AStarNode | null {
-		let minDistance = Number.MAX_VALUE;
-		let closestNode = null;
+	FindElementWithLowestH(s: Set<AStarNode>): AStarNode | null {
+		let lowestH = 1000000;
+		let lowestNode: AStarNode | null = null;
+		const allH: number[] = [];
 		for (const node of s) {
-			const distance = Math.hypot(node.lat - end.lat, node.lon - end.lon);
-			if (distance < minDistance) {
-				minDistance = distance;
-				closestNode = node;
+			allH.push(node.h);
+			if (node.h < lowestH) {
+				lowestH = node.h;
+				lowestNode = node;
 			}
 		}
-		return closestNode;
+		return lowestNode;
 	}
 }

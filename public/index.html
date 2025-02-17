@@ -165,7 +165,7 @@
 					const pathfinding = new PathFinding(graph, startpoint, endpoint);
 					console.log("Running PathFinding from", startpoint, "to", endpoint);
 
-					const result = pathfinding.run();
+					const result = pathfinding.run(tileManager);
 					const path = result?.bestPath;
 					const distanceInKm = result?.distance / 1000;
 					const timeInMinutes = result?.time / 60;

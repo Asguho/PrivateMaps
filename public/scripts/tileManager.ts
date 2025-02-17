@@ -171,4 +171,26 @@ export class TileManager {
 		}
 		return;
 	}
+
+	async loadTilesInBoundingBox(lat1: number, lon1: number, lat2: number, lon2: number) {
+		//not used af is too inefficient on large scale routes
+		const minLat = Math.min(lat1, lat2);
+		const maxLat = Math.max(lat1, lat2);
+		const minLon = Math.min(lon1, lon2);
+		const maxLon = Math.max(lon1, lon2);
+
+		const latStart = Math.floor(minLat / this.tileSize) * this.tileSize;
+		const lonStart = Math.floor(minLon / this.tileSize) * this.tileSize;
+		const latEnd = Math.ceil(maxLat / this.tileSize) * this.tileSize;
+		const lonEnd = Math.ceil(maxLon / this.tileSize) * this.tileSize;
+
+		const promises = [];
+		for (let lat = latStart; lat <= latEnd; lat += this.tileSize) {
+			for (let lon = lonStart; lon <= lonEnd; lon += this.tileSize) {
+				promises.push(this.loadTileAsync(lat, lon, this.viewport));
+			}
+		}
+
+		await Promise.all(promises);
+	}
 }

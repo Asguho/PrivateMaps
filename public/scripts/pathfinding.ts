@@ -43,23 +43,27 @@ export class PathFinding {
 		//HAPPY DAYS (NOT REALLY)
 		const MAX_TRIES = 100;
 		let tries = 0;
-		let path, closedList;
+		let pathTemp, closedListTemp;
+		({ path: pathTemp, closedList: closedListTemp } = this.aStar.run(tm));
 		while (tries < MAX_TRIES) {
-			({ path, closedList } = this.aStar.run(tm));
-			if (!path) {
-				const p = this.FindElementWithLowestH(closedList);
-				if (!p) return { bestPath: null, explored: closedList };
+			if (!pathTemp) {
+				const p = this.FindElementWithLowestH(closedListTemp);
+				if (!p) return { bestPath: null, explored: closedListTemp };
 				console.log("Last explored node:", p);
 				this.graph = await tm.loadNearestTiles(p, tries);
 				this.aStar = new aStar(this.graph, this.start, this.end);
 			} else {
 				break;
 			}
+			({ path: pathTemp, closedList: closedListTemp } = this.aStar.run(tm));
 			tries++;
 		}
 
+		//({ path, closedList } = this.aStar.run(tm));
+
+		//const { path, closedList } = this.aStar.run(tm);
+		const { path, closedList } = { path: pathTemp, closedList: closedListTemp };
 		/* //no-retry
-		const { path, closedList } = this.aStar.run(tm);
 		//console.log("Path found at try:", tries, path);
 		if (!path) {
 			const p = this.FindElementWithLowestH(closedList);

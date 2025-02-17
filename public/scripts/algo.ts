@@ -79,51 +79,51 @@ export class Algo {
     }
 
     getNeighbors(point: Point) {
-        const newNeigbors = this.graph.neighbors.get(point.id) || [];
+        return this.graph.neighbors.get(point.id) || [];
 
-        const oldNeighbors = this.graph.edges
-            .filter(
-                ({ point1, point2, isCarAllowed, oneway, junction }) =>
-                    isCarAllowed && (point1.id === point.id || (point2.id === point.id && !(oneway || junction))),
-            )
-            .map(({ point1, point2 }) => (point1.id === point.id ? point2 : point1));
+        // const oldNeighbors = this.graph.edges
+        //     .filter(
+        //         ({ point1, point2, isCarAllowed, oneway, junction }) =>
+        //             isCarAllowed && (point1.id === point.id || (point2.id === point.id && !(oneway || junction))),
+        //     )
+        //     .map(({ point1, point2 }) => (point1.id === point.id ? point2 : point1));
 
-        if (JSON.stringify(oldNeighbors) !== JSON.stringify(newNeigbors)) {
-            console.log('are not equal');
-            console.log('Old neighbors:', oldNeighbors);
-            console.log('New neighbors:', newNeigbors);
-        } else {
-            console.log('are equal');
-        }
+        // if (JSON.stringify(oldNeighbors) !== JSON.stringify(newNeigbors)) {
+        //     console.log('are not equal');
+        //     console.log('Old neighbors:', oldNeighbors);
+        //     console.log('New neighbors:', newNeigbors);
+        // } else {
+        //     console.log('are equal');
+        // }
 
-        const uniqueOldNeighbors = oldNeighbors.filter(
-            (oldNeighbor) => !newNeigbors.some((newNeighbor) => newNeighbor.id === oldNeighbor.id),
-        );
-        if (uniqueOldNeighbors.length > 0) {
-            console.log('Unique old neighbors:', uniqueOldNeighbors);
-            uniqueOldNeighbors.forEach((neighbor) => {
-                const edges = this.graph.edges.filter(
-                    (edge) => edge.point1.id === point.id || edge.point2.id === point.id,
-                );
-                console.log(`Edges including point ${point.id}:`, edges);
-            });
-        }
+        // const uniqueOldNeighbors = oldNeighbors.filter(
+        //     (oldNeighbor) => !newNeigbors.some((newNeighbor) => newNeighbor.id === oldNeighbor.id),
+        // );
+        // if (uniqueOldNeighbors.length > 0) {
+        //     console.log('Unique old neighbors:', uniqueOldNeighbors);
+        //     uniqueOldNeighbors.forEach((neighbor) => {
+        //         const edges = this.graph.edges.filter(
+        //             (edge) => edge.point1.id === point.id || edge.point2.id === point.id,
+        //         );
+        //         console.log(`Edges including point ${point.id}:`, edges);
+        //     });
+        // }
 
-        const uniqueNewNeighbors = newNeigbors.filter(
-            (newNeighbor) => !oldNeighbors.some((oldNeighbor) => oldNeighbor.id === newNeighbor.id),
-        );
+        // const uniqueNewNeighbors = newNeigbors.filter(
+        //     (newNeighbor) => !oldNeighbors.some((oldNeighbor) => oldNeighbor.id === newNeighbor.id),
+        // );
 
-        if (uniqueNewNeighbors.length > 0) {
-            console.log('Unique new neighbors:', uniqueNewNeighbors);
-            uniqueNewNeighbors.forEach((neighbor) => {
-                const edges = this.graph.edges.filter(
-                    (edge) => edge.point1.id === point.id || edge.point2.id === point.id,
-                );
-                console.log(`Edges including point ${point.id}:`, edges);
-            });
-        }
+        // if (uniqueNewNeighbors.length > 0) {
+        //     console.log('Unique new neighbors:', uniqueNewNeighbors);
+        //     uniqueNewNeighbors.forEach((neighbor) => {
+        //         const edges = this.graph.edges.filter(
+        //             (edge) => edge.point1.id === point.id || edge.point2.id === point.id,
+        //         );
+        //         console.log(`Edges including point ${point.id}:`, edges);
+        //     });
+        // }
 
-        return oldNeighbors;
+        // return oldNeighbors;
     }
 
     createGraphWithOptimalPath() {

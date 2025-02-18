@@ -1,4 +1,4 @@
-FROM denoland/deno-2.1.10
+FROM denoland/deno:alpine-1.35.1
 WORKDIR /app
 COPY . .
 EXPOSE 8000

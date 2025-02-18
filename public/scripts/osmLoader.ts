@@ -14,7 +14,7 @@ export class OsmLoader {
         const result = await (fetch(
             `/api?latStart=${latStart}&lonStart=${lonStart}&latEnd=${latEnd}&lonEnd=${lonEnd}`,
         ).then((data) => data.json()));
-        console.log('result', result);
+        // console.log('result', result);
         const performanceStart = performance.now();
         for (const point of result.graph.points) {
             this.points.push(new Point(point.id, point.lat, point.lon));

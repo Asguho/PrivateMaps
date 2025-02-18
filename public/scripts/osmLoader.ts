@@ -12,7 +12,7 @@ export class OsmLoader {
 
     async load(latStart: number, lonStart: number, latEnd: number, lonEnd: number) {
         const result = await (fetch(
-            `http://localhost:8000/api?latStart=${latStart}&lonStart=${lonStart}&latEnd=${latEnd}&lonEnd=${lonEnd}`,
+            `/api?latStart=${latStart}&lonStart=${lonStart}&latEnd=${latEnd}&lonEnd=${lonEnd}`,
         ).then((data) => data.json()));
         console.log('result', result);
         const performanceStart = performance.now();

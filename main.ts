@@ -22,7 +22,7 @@ const headers = {
 	"Cache-Control": "public, max-age=31536000, immutable",
 };
 
-Deno.serve({ port: 3000, hostname: "127.0.0.1" }, async (request: Request) => {
+Deno.serve({ port: 3000, hostname: "0.0.0.0" }, async (request: Request) => {
 	if (request.url.includes("/api")) {
 		const startServeTime = performance.now();
 		const url = new URL(request.url);

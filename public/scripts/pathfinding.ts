@@ -1,8 +1,8 @@
 import { aStar } from './aStar.ts';
-import { Djikstra } from './djikstra.ts';
 import { Graph } from './graph.ts';
 import { Point } from './point.ts';
 import { Path } from './path.ts';
+import { TileManager } from './tileManager.ts';
 
 export class PathFinding {
     graph: Graph;
@@ -10,14 +10,15 @@ export class PathFinding {
     end: Point;
     //@ts-ignore
     aStar: aStar;
-    //@ts-ignore
-    djikstra: Djikstra;
+    tileManager: TileManager;
 
-    constructor(graph: Graph, start: Point, end: Point) {
+    constructor(graph: Graph, start: Point, end: Point, tileManager: TileManager) {
         this.graph = graph;
         this.start = start;
         this.end = end;
+        this.tileManager = tileManager;
     }
+
     calculateTravelTime(
         path: Path,
         distances: Map<number | null, Map<number | null, number | null>>,
@@ -33,9 +34,9 @@ export class PathFinding {
         return totalDistance;
     }
 
-    run() {
-        this.aStar = new aStar(this.graph, this.start, this.end);
-        const { path: aStarPath, closedList } = this.aStar.run();
+    async run() {
+        this.aStar = new aStar(this.graph, this.start, this.end, this.tileManager);
+        const { path: aStarPath, closedList } = await this.aStar.run();
         if (aStarPath) {
             const aStarTime = this.calculateTravelTime(
                 aStarPath,

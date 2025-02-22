@@ -26,7 +26,7 @@ export class OsmLoader {
         for (const [key, value] of Object.entries(result.neighbors)) {
             neighborsMap.set(Number(key), value as Point[]);
         }
-        console.log('Loaded', this.points.length, 'points and', this.edges.length, 'edges in ', performance.now() - performanceStart, 'ms');
+        //console.log('Loaded', this.points.length, 'points and', this.edges.length, 'edges in ', performance.now() - performanceStart, 'ms');
 
         return new Graph(
             this.points,

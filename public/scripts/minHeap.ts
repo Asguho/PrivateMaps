@@ -23,7 +23,7 @@ export class MinHeap<T> {
         return poppedValue;
     }
 
-    private bubbleUp(index) {
+    private bubbleUp(index: number) {
         while (index > 0) {
             const parentIndex = Math.floor((index - 1) / 2);
             if (this.comparator(this.heap[index], this.heap[parentIndex]) >= 0) break;
@@ -35,7 +35,7 @@ export class MinHeap<T> {
         }
     }
 
-    private bubbleDown(index) {
+    private bubbleDown(index: number) {
         const length = this.heap.length;
         const element = this.heap[0];
         while (true) {

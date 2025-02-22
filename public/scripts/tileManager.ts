@@ -3,6 +3,7 @@ import { Tile } from './tile.ts';
 import { Viewport } from './viewport.ts';
 
 export class TileManager {
+
     viewport: Viewport;
     unloadedTiles: { lat: number; lon: number }[];
     tiles: Map<string, Tile>;
@@ -27,30 +28,37 @@ export class TileManager {
         }
     }
 
-    async loadTileAsync(lat: number, lon: number, viewport: Viewport) {
+    async loadTileAsync(lat: number, lon: number, viewport: Viewport): Promise<Tile | null> {
         // Align lat and lon to the tile grid
         const alignedLat = Math.floor(lat / this.tileSize) * this.tileSize;
         const alignedLon = Math.floor(lon / this.tileSize) * this.tileSize;
-
+    
         const tileKey = `${alignedLat},${alignedLon}`;
         // Check if tile is already loaded or being loaded using Map and Set
-        if (this.tiles.has(tileKey) || this.loadingTiles.has(tileKey)) {
-            return;
+        if (this.tiles.has(tileKey)) {
+            return this.tiles.get(tileKey) || null;
+        }
+        if (this.loadingTiles.has(tileKey)) {
+            // Wait for the tile to finish loading if it's already being loaded
+            while (this.loadingTiles.has(tileKey)) {
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+            return this.tiles.get(tileKey) || null;
         }
         this.loadingTiles.add(tileKey);
-
+    
         const tileLatStart = alignedLat;
         const tileLonStart = alignedLon;
         const tileLatEnd = alignedLat + this.tileSize;
         const tileLonEnd = alignedLon + this.tileSize;
-
+    
         const tile = new Tile(tileLatStart, tileLonStart, tileLatEnd, tileLonEnd);
         await tile.loadTileAsync().then((graph) => {
-            console.log('Tile loaded');
-            //viewport.triggerRedraw();
+            //console.log('Tile loaded');
+            this.tiles.set(tileKey, tile);
         });
         this.loadingTiles.delete(tileKey);
-        this.tiles.set(tileKey, tile);
+        return tile;
     }
 
     determineTilesInView(viewport: Viewport) {
@@ -85,9 +93,14 @@ export class TileManager {
         // console.log(`Determine tiles in view = ${amountOfTilesProcessed}: ${end - start}ms`);
         return; // Removed unused 'tiles' variable
     }
+    isTileLoaded(lat: number, lon: number) {
+        const alignedLat = Math.floor(lat / this.tileSize) * this.tileSize;
+        const alignedLon = Math.floor(lon / this.tileSize) * this.tileSize;
+        return this.tiles.has(`${alignedLat},${alignedLon}`);
+    }
 
     mergeGraph(graphs: Graph[]): Graph {
-        const start = new Date().getTime();
+        //const start = new Date().getTime();
         const points = [];
         const edges = [];
         const neighbors = new Map();
@@ -107,8 +120,8 @@ export class TileManager {
                 }
             }
         }
-        const end = new Date().getTime();
-        console.log(`Merging graphs took ${end - start}ms`);
+        //const end = new Date().getTime();
+        //console.log(`Merging graphs took ${end - start}ms`);
         return new Graph(points, edges, neighbors);
     }
 

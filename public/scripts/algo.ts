@@ -41,6 +41,7 @@ export class Algo {
     openSet: Map<number, Node>;
     distances: Map<number | null, Map<number | null, number | null>>;
     closedList: Set<Point>;
+    //@ts-ignore
     currentPath: Path;
 
     constructor(graph: Graph, start: Point, end: Point) {
@@ -48,6 +49,7 @@ export class Algo {
         this.start = start;
         this.end = end;
         this.openSet = new Map();
+        //@ts-ignore
         this.currentPath;
         this.distances = new Map();
         this.closedList = new Set();
@@ -86,7 +88,9 @@ export class Algo {
         const pointSet = new Set<Point>();
 
         for (let i = 0; i < this.currentPath.size() - 1; i++) {
+            //@ts-ignore
             const point1: Point = this.currentPath[i];
+            //@ts-ignore
             const point2: Point = this.currentPath[i + 1];
             newGraph.addEdge(new Edge(-1, point1, point2, 'true', 20, 'optimal', false, false));
             pointSet.add(point1);

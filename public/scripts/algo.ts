@@ -21,7 +21,7 @@ export class AStarNode extends Node {
         super(point, parent);
         this.g = g;
         this.h = h;
-        this.f = this.g + this.h + 0.001 * this.h;
+        this.f = this.g + this.h *1.1;
     }
 }
 

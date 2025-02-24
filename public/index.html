@@ -16,7 +16,7 @@
 			<button id="Run">Find Shortest Path</button>
 			<!--distance and time if available insert as p tag here-->
 			<p id="distance"></p>
-			<p id="time"></p>
+			<!--<p id="time"></p>-->
 		</div>
 
 		<script type="module">
@@ -136,7 +136,7 @@
 			const runButton = document.getElementById("Run");
 			runButton.addEventListener("click", async () => {
 				document.getElementById("distance").textContent = "";
-				document.getElementById("time").textContent = "";
+				//document.getElementById("time").textContent = "";
 				const start = document.getElementById("start").value;
 				const end = document.getElementById("end").value;
 				const geocoder = new geoCoder();
@@ -168,7 +168,7 @@
 					const timeInMinutes = result?.time / 60;
 		
 					document.getElementById("distance").textContent = `Distance: ${distanceInKm.toFixed(2)} km`;
-					document.getElementById("time").textContent = `Time: ${timeInMinutes.toFixed(0)} min`;
+					//document.getElementById("time").textContent = `Time: ${timeInMinutes.toFixed(0)} min`;
 		
 					console.log("Pathfinding algorithm used:", result?.algorithm);
 					console.log("PathFinding path points:", path);

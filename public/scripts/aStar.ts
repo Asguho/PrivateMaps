@@ -105,7 +105,7 @@ export class aStar extends Algo {
                 }
                 const gScore = (currentNode as AStarNode).g + distance;
                 const hScore = this.heuristic(neighbor, this.end);
-                const fScore = gScore + (hScore * 1.1);
+                const fScore = gScore + (hScore * 1.3);;
 
                 const neighborNode = new AStarNode(neighbor, currentNode, gScore, hScore);
 

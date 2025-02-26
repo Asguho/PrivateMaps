@@ -229,24 +229,4 @@ export class aStar {
 		return this.graph.neighbors.get(point.id) || [];
 	}
 
-	createGraphWithOptimalPath() {
-		const newGraph = new Graph();
-		const pointSet = new Set<Point>();
-
-		for (let i = 0; i < this.currentPath.size() - 1; i++) {
-			//@ts-ignore
-			const point1: Point = this.currentPath[i];
-			//@ts-ignore
-			const point2: Point = this.currentPath[i + 1];
-			newGraph.addEdge(
-				new Edge(-1, point1, point2, "true", 20, "optimal", false, false),
-			);
-			pointSet.add(point1);
-			pointSet.add(point2);
-		}
-
-		newGraph.points = Array.from(pointSet);
-		console.log("Optimal path graph:", newGraph);
-		return newGraph;
-	}
 }

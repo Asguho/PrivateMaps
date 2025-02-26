@@ -1,158 +1,252 @@
-import { Algo, AStarNode } from './algo.ts';
-import { Graph } from './graph.ts';
-import { Point } from './point.ts';
-import { MinHeap } from './minHeap.ts';
-import { TileManager } from './tileManager.ts';
-import { Tile } from './tile.ts';
+import { Graph } from "./graph.ts";
+import { Point } from "./point.ts";
+import { MinHeap } from "./minHeap.ts";
+import { TileManager } from "./tileManager.ts";
+import { Edge } from "./edge.ts";
+import { Path } from "./path.ts";
 
-export class aStar extends Algo {
-    openList: MinHeap<AStarNode>;
-    avgSpeed: number;
-    tileManager: TileManager;
+class Node extends Point {
+	parent: Node | null;
 
-    constructor(graph: Graph, start: Point, end: Point, tileManager: TileManager) {
-        super(graph, start, end);
-        this.openList = new MinHeap<AStarNode>((a, b) => {
-            if (a.f === b.f) {
-                return a.h - b.h; // Use h as a tie-breaker
-            }
-            return a.f - b.f;
-        });
-        this.tileManager = tileManager;
-        this.graph.edges.forEach(({ point1, point2, isCarAllowed, maxSpeed }) => {
-            if (!this.distances.has(point1.id)) {
-                this.distances.set(point1.id, new Map());
-            }
-            if (!this.distances.has(point2.id)) {
-                this.distances.set(point2.id, new Map());
-            }
-            const calculatedDistance = this.distance(point1, point2);
-            const travelTime = isCarAllowed && maxSpeed > 0 ? calculatedDistance / (maxSpeed / 3.6) : null;
-            this.distances.get(point1.id)?.set(point2.id, travelTime);
-            this.distances.get(point2.id)?.set(point1.id, travelTime);
-        });
-        this.avgSpeed = this.getWeightedAverageSpeed();
-        console.log('Average speed:', this.avgSpeed);
-    }
+	constructor(point: Point, parent: Node | null) {
+		super(point.id, point.lat, point.lon);
+		this.parent = parent;
+	}
+}
 
-    popOpen() {
-        return this.openList.pop();
-    }
+class AStarNode extends Node {
+	g: number;
+	h: number;
+	f: number;
 
-    addClosed(node: Point) {
-        this.closedList.add(node);
-    }
+	constructor(point: Point, parent: Node | null, g: number, h: number) {
+		super(point, parent);
+		this.g = g;
+		this.h = h;
+		this.f = g + h * 1.3;
+	}
+}
 
-    isInClosed(point: Point) {
-        return this.closedList.has(point);
-    }
+export class aStar {
+	openList: MinHeap<AStarNode>;
+	avgSpeed: number;
+	tileManager: TileManager;
+	graph: Graph;
+	start: Point;
+	end: Point;
+	openSet: Map<number, Node>;
+	distances: Map<number | null, Map<number | null, number | null>>;
+	closedList: Set<Point>;
+	currentPath: Path;
 
-    async run() {
-        console.log(this.start, this.end);
-        console.log('ends neighbors:', this.graph.neighbors.get(this.end.id));
-        const startNode = new AStarNode(this.start, null, 0, this.heuristic(this.start, this.end));
-        this.openList.insert(startNode);
-        console.log('Start node:', startNode.f === startNode.g + startNode.h);
-        //log start and end coords
-        console.log('Start:', this.start);
-        console.log('End:', this.end);
+	constructor(graph: Graph, start: Point, end: Point, tileManager: TileManager) {
+		this.graph = graph;
+		this.start = start;
+		this.end = end;
+		this.openSet = new Map();
+		this.currentPath = new Path([], "red");
+		this.distances = new Map();
+		this.closedList = new Set();
+		this.openList = new MinHeap<AStarNode>((a, b) => {
+			if (a.f === b.f) {
+				return a.h - b.h;
+			}
+			return a.f - b.f;
+		});
+		this.tileManager = tileManager;
+		this.graph.edges.forEach(({ point1, point2, isCarAllowed, maxSpeed }) => {
+			if (!this.distances.has(point1.id)) {
+				this.distances.set(point1.id, new Map());
+			}
+			if (!this.distances.has(point2.id)) {
+				this.distances.set(point2.id, new Map());
+			}
+			const calculatedDistance = this.distance(point1, point2);
+			const travelTime =
+				isCarAllowed && maxSpeed > 0 ? calculatedDistance / (maxSpeed / 3.6) : null;
+			this.distances.get(point1.id)?.set(point2.id, travelTime);
+			this.distances.get(point2.id)?.set(point1.id, travelTime);
+		});
+		this.avgSpeed = this.getWeightedAverageSpeed();
+		console.log("Average speed:", this.avgSpeed);
+	}
 
-        while (!this.openList.isEmpty()) {
-            const currentNode = this.popOpen();
-            if (!currentNode) {
-                continue;
-            }
+	popOpen() {
+		return this.openList.pop();
+	}
 
+	addClosed(node: Point) {
+		this.closedList.add(node);
+	}
 
-            if (currentNode.id === this.end.id) {
-                this.currentPath = this.reconstructPath(currentNode);
-                return { path: this.currentPath, closedList: this.closedList }; // Return the path as an array of points
-            }
+	isInClosed(point: Point) {
+		return this.closedList.has(point);
+	}
 
-            if (!this.tileManager.isTileLoaded(currentNode.lat, currentNode.lon)) {
-                const tile = await this.tileManager.loadTileAsync(currentNode.lat, currentNode.lon, this.tileManager.viewport);
-                const graph = this.tileManager.mergeGraph(this.tileManager.getAllTileGraphs().filter((g): g is Graph => g !== null));
-                this.graph = graph;
-                //console.log("Graph updated after loading tile:", this.graph);
-                // Calculate distances for this new tile
-                //@ts-ignore
-                tile.graph.edges.forEach(({ point1, point2, isCarAllowed, maxSpeed }) => {
-                    if (!this.distances.has(point1.id)) {
-                        this.distances.set(point1.id, new Map());
-                    }
-                    if (!this.distances.has(point2.id)) {
-                        this.distances.set(point2.id, new Map());
-                    }
-                    const calculatedDistance = this.distance(point1, point2);
-                    const travelTime = isCarAllowed && maxSpeed > 0 ? calculatedDistance / (maxSpeed / 3.6) : null;
-                    this.distances.get(point1.id)?.set(point2.id, travelTime);
-                    this.distances.get(point2.id)?.set(point1.id, travelTime);
-                });
-            }
+	async run() {
+		console.log(this.start, this.end);
+		const startNode = new AStarNode(
+			this.start,
+			null,
+			0,
+			this.Timedheuristic(this.start, this.end),
+		);
+		this.openList.insert(startNode);
+		while (!this.openList.isEmpty()) {
+			const currentNode = this.popOpen();
+			if (!currentNode) {
+				continue;
+			}
 
-            this.addClosed(currentNode);
+			if (currentNode.id === this.end.id) {
+				this.currentPath = this.reconstructPath(currentNode);
+				return { path: this.currentPath, closedList: this.closedList };
+			}
 
-            const neighbors = this.getNeighbors(currentNode);
-            //console.log("Neighbors:", neighbors);
+			if (!this.tileManager.isTileLoaded(currentNode.lat, currentNode.lon)) {
+				const tile = await this.tileManager.loadTileAsync(
+					currentNode.lat,
+					currentNode.lon,
+					this.tileManager.viewport,
+				);
+				const graph = this.tileManager.mergeGraph(
+					this.tileManager.getAllTileGraphs().filter((g): g is Graph => g !== null),
+				);
+				this.graph = graph;
+				if (tile?.graph) {
+					tile.graph.edges.forEach(({ point1, point2, isCarAllowed, maxSpeed }) => {
+						if (!this.distances.has(point1.id)) {
+							this.distances.set(point1.id, new Map());
+						}
+						if (!this.distances.has(point2.id)) {
+							this.distances.set(point2.id, new Map());
+						}
+						const calculatedDistance = this.distance(point1, point2);
+						const travelTime =
+							isCarAllowed && maxSpeed > 0
+								? calculatedDistance / (maxSpeed / 3.6)
+								: null;
+						this.distances.get(point1.id)?.set(point2.id, travelTime);
+						this.distances.get(point2.id)?.set(point1.id, travelTime);
+					});
+				}
+			}
 
-            for (const neighbor of neighbors) {
-                if (this.isInClosed(neighbor)) continue;
+			this.addClosed(currentNode);
 
-                const distance = this.getDistance(currentNode, neighbor);
-                if (distance === null) {
-                    //console.log("Distance is null between: " + currentNode.id + " and " + neighbor.id);
-                    continue;
-                }
-                const gScore = (currentNode as AStarNode).g + distance;
-                const hScore = this.heuristic(neighbor, this.end);
-                const fScore = gScore + (hScore * 1.3);;
+			const neighbors = this.getNeighbors(currentNode);
 
-                const neighborNode = new AStarNode(neighbor, currentNode, gScore, hScore);
+			for (const neighbor of neighbors) {
+				if (this.isInClosed(neighbor)) continue;
 
-                const neighborNodeInSet = this.openSet.get(neighbor.id) as AStarNode;
-                if (!neighborNodeInSet || neighborNodeInSet.f > fScore) {
-                    this.openSet.set(neighbor.id, neighborNode);
-                    this.openList.insert(neighborNode);
-                }
-            }
-        }
-        console.error('No path found', this.closedList);
-        return { path: null, closedList: this.closedList };
-    }
+				const distance = this.getDistance(currentNode, neighbor);
+				if (distance === null) {
+					continue;
+				}
+				const gScore = (currentNode as AStarNode).g + distance;
+				const hScore = this.Timedheuristic(neighbor, this.end);
+				const fScore = gScore + hScore * 1.3;
 
-    getDistance(point1: Point, point2: Point): number | null {
-        return this.distances.get(point1.id)?.get(point2.id) || null;
-    }
+				const neighborNode = new AStarNode(neighbor, currentNode, gScore, hScore);
 
-    getWeightedAverageSpeed() {
-        let totalWeightedSpeed = 0;
-        let totalDistance = 0;
+				const neighborNodeInSet = this.openSet.get(neighbor.id) as AStarNode;
+				if (!neighborNodeInSet || neighborNodeInSet.f > fScore) {
+					this.openSet.set(neighbor.id, neighborNode);
+					this.openList.insert(neighborNode);
+				}
+			}
+		}
+		console.error("No path found", this.closedList);
+		return { path: null, closedList: this.closedList };
+	}
 
-        this.graph.edges.forEach(({ point1, point2, isCarAllowed, maxSpeed }) => {
-            if (isCarAllowed && maxSpeed > 0) {
-                const distance = this.distance(point1, point2); // in meters
-                totalWeightedSpeed += maxSpeed * distance; // weighted speed
-                totalDistance += distance; // sum of weights
-            }
-        });
+	getDistance(point1: Point, point2: Point): number | null {
+		return this.distances.get(point1.id)?.get(point2.id) || null;
+	}
 
-        // Avoid division by zero
-        return totalDistance > 0 ? totalWeightedSpeed / totalDistance : 0;
-    }
+	getWeightedAverageSpeed() {
+		let totalWeightedSpeed = 0;
+		let totalDistance = 0;
 
-    heuristic(point1: Point, point2: Point) {
-        const R = 6371e3; // Earth's radius in meters
-        const [lat1, lon1] = [point1.lat, point1.lon];
-        const [lat2, lon2] = [point2.lat, point2.lon];
-        const toRadians = (degrees: number) => (degrees * Math.PI) / 180;
+		this.graph.edges.forEach(({ point1, point2, isCarAllowed, maxSpeed }) => {
+			if (isCarAllowed && maxSpeed > 0) {
+				const distance = this.distance(point1, point2);
+				totalWeightedSpeed += maxSpeed * distance;
+				totalDistance += distance;
+			}
+		});
 
-        const dLat = toRadians(lat2 - lat1);
-        const dLon = toRadians(lon2 - lon1);
+		return totalDistance > 0 ? totalWeightedSpeed / totalDistance : 0;
+	}
 
-        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-            Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        const distance = R * c;
-        return distance / this.avgSpeed;
-    }
+	Timedheuristic(point1: Point, point2: Point) {
+		const R = 6371e3; // Jordens radius i meter
+		const [lat1, lon1] = [point1.lat, point1.lon];
+		const [lat2, lon2] = [point2.lat, point2.lon];
+		const toRadians = (degrees: number) => (degrees * Math.PI) / 180;
+
+		const dLat = toRadians(lat2 - lat1);
+		const dLon = toRadians(lon2 - lon1);
+
+		const a =
+			Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+			Math.cos(toRadians(lat1)) *
+				Math.cos(toRadians(lat2)) *
+				Math.sin(dLon / 2) *
+				Math.sin(dLon / 2);
+		const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+		const distance = R * c;
+		return distance / this.avgSpeed;
+	}
+	distance(node: Point, goal: Point) {
+		const R = 6371e3;
+		const [lat1, lon1] = [node.lat, node.lon];
+		const [lat2, lon2] = [goal.lat, goal.lon];
+		const toRadians = (degrees: number) => (degrees * Math.PI) / 180;
+		const dLat = toRadians(lat2 - lat1);
+		const dLon = toRadians(lon2 - lon1);
+		const a =
+			Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+			Math.cos(toRadians(lat1)) *
+				Math.cos(toRadians(lat2)) *
+				Math.sin(dLon / 2) *
+				Math.sin(dLon / 2);
+		const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+		return R * c;
+	}
+
+	reconstructPath(node: Node | null) {
+		const path: Node[] = [];
+		while (node) {
+			path.push(node);
+			node = node.parent;
+		}
+		const finalpath = new Path(path.reverse(), "blue");
+		return finalpath;
+	}
+
+	getNeighbors(point: Point) {
+		return this.graph.neighbors.get(point.id) || [];
+	}
+
+	createGraphWithOptimalPath() {
+		const newGraph = new Graph();
+		const pointSet = new Set<Point>();
+
+		for (let i = 0; i < this.currentPath.size() - 1; i++) {
+			//@ts-ignore
+			const point1: Point = this.currentPath[i];
+			//@ts-ignore
+			const point2: Point = this.currentPath[i + 1];
+			newGraph.addEdge(
+				new Edge(-1, point1, point2, "true", 20, "optimal", false, false),
+			);
+			pointSet.add(point1);
+			pointSet.add(point2);
+		}
+
+		newGraph.points = Array.from(pointSet);
+		console.log("Optimal path graph:", newGraph);
+		return newGraph;
+	}
 }

@@ -46,7 +46,9 @@ out geom;
         `),
 		});
 
-		const hashHex = await generateHash(req.url + `${latStart},${lonStart},${latEnd},${lonEnd}` + PROGRAM_VERSION);
+		const hashHex = await generateHash(
+			req.url + `${latStart},${lonStart},${latEnd},${lonEnd}` + PROGRAM_VERSION,
+		);
 		const cacheResponse = await isCacheAvailable(hashHex);
 
 		if (!cacheResponse) {
@@ -54,12 +56,27 @@ out geom;
 			const graph = convertToGraphData(result);
 			const neighbors = getNeighborsFromEdges(graph.edges);
 
-			const response = JSON.stringify({ graph, neighbors: Object.fromEntries(neighbors) });
+			const response = JSON.stringify({
+				graph,
+				neighbors: Object.fromEntries(neighbors),
+			});
 			addToCache(hashHex, response);
-			console.log("SERVED FROM WEB: " + hashHex + " in " + (performance.now() - startServeTime) + "ms");
+			console.log(
+				"SERVED FROM WEB: " +
+					hashHex +
+					" in " +
+					(performance.now() - startServeTime) +
+					"ms",
+			);
 			return new Response(response, { headers });
 		} else {
-			console.log("SERVED FROM CACHE: " + hashHex + " in " + (performance.now() - startServeTime) + "ms");
+			console.log(
+				"SERVED FROM CACHE: " +
+					hashHex +
+					" in " +
+					(performance.now() - startServeTime) +
+					"ms",
+			);
 			return new Response(cacheResponse, { headers });
 		}
 	}
@@ -67,7 +84,10 @@ out geom;
 });
 
 async function generateHash(data: string) {
-	const hashBuffer = await crypto.subtle.digest("md5", new TextEncoder().encode(data));
+	const hashBuffer = await crypto.subtle.digest(
+		"md5",
+		new TextEncoder().encode(data),
+	);
 	return Array.from(new Uint8Array(hashBuffer))
 		.map((b) => b.toString(16).padStart(2, "0"))
 		.join("");
@@ -158,7 +178,7 @@ function getNeighbors(data: any) {
 			element.type === "way" &&
 			isCarAllowedBasedOnType(element.tags.highway) &&
 			!(element.tags.oneway == "yes") &&
-			!(element.tags.junction == "roundabout")
+			!(element.tags.junction == "roundabout"),
 	);
 	// oneway junction
 	for (const way of ways) {
@@ -171,15 +191,25 @@ function getNeighbors(data: any) {
 			if (!neighbors.has(to)) {
 				neighbors.set(to, []);
 			}
-			neighbors.get(from)?.push({ id: to, lat: way.geometry[i + 1].lat, lon: way.geometry[i + 1].lon });
-			neighbors.get(to)?.push({ id: from, lat: way.geometry[i].lat, lon: way.geometry[i].lon });
+			neighbors
+				.get(from)
+				?.push({
+					id: to,
+					lat: way.geometry[i + 1].lat,
+					lon: way.geometry[i + 1].lon,
+				});
+			neighbors
+				.get(to)
+				?.push({ id: from, lat: way.geometry[i].lat, lon: way.geometry[i].lon });
 		}
 	}
 	return neighbors;
 }
 function getNeighborsFromEdges(edges: Edge[]) {
 	const neighbors = new Map<number, Point[]>();
-	const filteredEdges = edges.filter((edge) => isCarAllowedBasedOnType(edge.highway));
+	const filteredEdges = edges.filter((edge) =>
+		isCarAllowedBasedOnType(edge.highway),
+	);
 	for (const edge of filteredEdges) {
 		if (!neighbors.has(edge.from.id)) {
 			neighbors.set(edge.from.id, []);

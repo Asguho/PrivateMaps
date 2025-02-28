@@ -2,7 +2,6 @@ import { Graph } from "./graph.ts";
 import { Point } from "./point.ts";
 import { MinHeap } from "./minHeap.ts";
 import { TileManager } from "./tileManager.ts";
-import { Edge } from "./edge.ts";
 import { Path } from "./path.ts";
 
 class Node extends Point {

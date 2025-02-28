@@ -1,5 +1,3 @@
-import { Viewport } from "./viewport.ts";
-
 export class Point {
 	id: number;
 	lat: number;

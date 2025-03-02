@@ -24,9 +24,7 @@
 				value="paul fennebergs alle 20"
 			/>
 			<button id="Run">Find Shortest Path</button>
-			<!--distance and time if available insert as p tag here-->
 			<p id="distance"></p>
-			<!--<p id="time"></p>-->
 		</div>
 
 		<script type="module">
@@ -74,11 +72,6 @@
 					ctx.strokeStyle = "rgba(255, 0, 0, 0.5)";
 					ctx.lineWidth = 2;
 					ctx.beginPath();
-					for (const point of explored) {
-						//const screenPoint = viewport.geoToCanvas(point.lat, point.lon);
-						//ctx.moveTo(screenPoint.x, screenPoint.y);
-						//ctx.arc(screenPoint.x, screenPoint.y, 2, 0, 2 * Math.PI);
-					}
 					ctx.stroke();
 				}
 				if (fpath) {
@@ -97,7 +90,7 @@
 					renderTimeout = setTimeout(() => {
 						render();
 						renderTimeout = null;
-					}, 16); // Approximately 60fps
+					}, 16); 
 				}
 			}
 
@@ -146,7 +139,6 @@
 			const runButton = document.getElementById("Run");
 			runButton.addEventListener("click", async () => {
 				document.getElementById("distance").textContent = "";
-				//document.getElementById("time").textContent = "";
 				const start = document.getElementById("start").value;
 				const end = document.getElementById("end").value;
 				const geocoder = new geoCoder();

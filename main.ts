@@ -32,59 +32,15 @@ Deno.serve({ port: 3000, hostname: '0.0.0.0' }, async (request: Request) => {
         const latEnd = url.searchParams.get('latEnd');
         const lonEnd = url.searchParams.get('lonEnd');
 
-<<<<<<< HEAD
-		const hashHex = await generateHash(
-			req.url + `${latStart},${lonStart},${latEnd},${lonEnd}` + PROGRAM_VERSION,
-		);
-		const cacheResponse = await isCacheAvailable(hashHex);
-=======
         const req = new Request(FETCH_URL, {
             method: 'POST',
             body: 'data=' +
                 encodeURIComponent(`[out:json][timeout:25];(way["highway"](${latStart},${lonStart},${latEnd},${lonEnd}););out geom;`),
         });
->>>>>>> 205d75162be170dec3dab6a621c8417a6c8de5a2
 
         const hashHex = await generateHash(req.url + `${latStart},${lonStart},${latEnd},${lonEnd}` + PROGRAM_VERSION);
         const cacheResponse = await isCacheAvailable(hashHex);
 
-<<<<<<< HEAD
-			const response = JSON.stringify({
-				graph,
-				neighbors: Object.fromEntries(neighbors),
-			});
-			addToCache(hashHex, response);
-			console.log(
-				"SERVED FROM WEB: " +
-					hashHex +
-					" in " +
-					(performance.now() - startServeTime) +
-					"ms",
-			);
-			return new Response(response, { headers });
-		} else {
-			console.log(
-				"SERVED FROM CACHE: " +
-					hashHex +
-					" in " +
-					(performance.now() - startServeTime) +
-					"ms",
-			);
-			return new Response(cacheResponse, { headers });
-		}
-	}
-	return serveDirWithTs(request, { fsRoot: "./public", showIndex: true });
-});
-
-async function generateHash(data: string) {
-	const hashBuffer = await crypto.subtle.digest(
-		"md5",
-		new TextEncoder().encode(data),
-	);
-	return Array.from(new Uint8Array(hashBuffer))
-		.map((b) => b.toString(16).padStart(2, "0"))
-		.join("");
-=======
         if (!cacheResponse) {
             const result = await fetch(req).then((res) => res.json());
             const graph = convertToGraphData(result);
@@ -107,7 +63,6 @@ async function generateHash(data: string) {
     return Array.from(new Uint8Array(hashBuffer))
         .map((b) => b.toString(16).padStart(2, '0'))
         .join('');
->>>>>>> 205d75162be170dec3dab6a621c8417a6c8de5a2
 }
 
 async function isCacheAvailable(hashHex: string) {
@@ -188,60 +143,6 @@ function isCarAllowedBasedOnType(type: string): boolean {
 }
 
 function getNeighbors(data: any) {
-<<<<<<< HEAD
-	const neighbors = new Map<number, Point[]>();
-	// console.log(data.elements.forEach((element: any) => element.tags.highway));
-	const ways = data.elements.filter(
-		(element: any) =>
-			element.type === "way" &&
-			isCarAllowedBasedOnType(element.tags.highway) &&
-			!(element.tags.oneway == "yes") &&
-			!(element.tags.junction == "roundabout"),
-	);
-	// oneway junction
-	for (const way of ways) {
-		for (let i = 0; i < way.nodes.length - 1; i++) {
-			const from = way.nodes[i];
-			const to = way.nodes[i + 1];
-			if (!neighbors.has(from)) {
-				neighbors.set(from, []);
-			}
-			if (!neighbors.has(to)) {
-				neighbors.set(to, []);
-			}
-			neighbors
-				.get(from)
-				?.push({
-					id: to,
-					lat: way.geometry[i + 1].lat,
-					lon: way.geometry[i + 1].lon,
-				});
-			neighbors
-				.get(to)
-				?.push({ id: from, lat: way.geometry[i].lat, lon: way.geometry[i].lon });
-		}
-	}
-	return neighbors;
-}
-function getNeighborsFromEdges(edges: Edge[]) {
-	const neighbors = new Map<number, Point[]>();
-	const filteredEdges = edges.filter((edge) =>
-		isCarAllowedBasedOnType(edge.highway),
-	);
-	for (const edge of filteredEdges) {
-		if (!neighbors.has(edge.from.id)) {
-			neighbors.set(edge.from.id, []);
-		}
-		neighbors.get(edge.from.id)?.push(edge.to);
-		if (!edge.oneway && !edge.junction) {
-			if (!neighbors.has(edge.to.id)) {
-				neighbors.set(edge.to.id, []);
-			}
-			neighbors.get(edge.to.id)?.push(edge.from);
-		}
-	}
-	return neighbors;
-=======
     const neighbors = new Map<number, Point[]>();
     // console.log(data.elements.forEach((element: any) => element.tags.highway));
     const ways = data.elements.filter(
@@ -284,5 +185,4 @@ function getNeighborsFromEdges(edges: Edge[]) {
         }
     }
     return neighbors;
->>>>>>> 205d75162be170dec3dab6a621c8417a6c8de5a2
 }

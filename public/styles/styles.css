@@ -2,7 +2,7 @@ body {
 	margin: 0;
 	padding: 0;
 	font-family: Arial, sans-serif;
-	overflow: hidden; /* Prevent page overflow */
+	overflow: hidden; 
 }
 
 .controls {
@@ -28,7 +28,7 @@ body {
 }
 
 .controls input {
-	width: calc(100% - 22px); /* Adjusted width to prevent overflow */
+	width: calc(100% - 22px); 
 }
 
 .controls button {

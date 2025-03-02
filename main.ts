@@ -142,33 +142,7 @@ function isCarAllowedBasedOnType(type: string): boolean {
     return true;
 }
 
-function getNeighbors(data: any) {
-    const neighbors = new Map<number, Point[]>();
-    // console.log(data.elements.forEach((element: any) => element.tags.highway));
-    const ways = data.elements.filter(
-        (element: any) =>
-            element.type === 'way' &&
-            isCarAllowedBasedOnType(element.tags.highway) &&
-            !(element.tags.oneway == 'yes') &&
-            !(element.tags.junction == 'roundabout'),
-    );
-    // oneway junction
-    for (const way of ways) {
-        for (let i = 0; i < way.nodes.length - 1; i++) {
-            const from = way.nodes[i];
-            const to = way.nodes[i + 1];
-            if (!neighbors.has(from)) {
-                neighbors.set(from, []);
-            }
-            if (!neighbors.has(to)) {
-                neighbors.set(to, []);
-            }
-            neighbors.get(from)?.push({ id: to, lat: way.geometry[i + 1].lat, lon: way.geometry[i + 1].lon });
-            neighbors.get(to)?.push({ id: from, lat: way.geometry[i].lat, lon: way.geometry[i].lon });
-        }
-    }
-    return neighbors;
-}
+
 function getNeighborsFromEdges(edges: Edge[]) {
     const neighbors = new Map<number, Point[]>();
     const filteredEdges = edges.filter((edge) => isCarAllowedBasedOnType(edge.highway));

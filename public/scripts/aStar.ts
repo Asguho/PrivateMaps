@@ -22,7 +22,7 @@ class AStarNode extends Node {
 		super(point, parent);
 		this.g = g;
 		this.h = h;
-		this.f = g + h * 1.3;
+		this.f = g + h * 1.1;
 	}
 }
 
@@ -144,7 +144,7 @@ export class aStar {
 				}
 				const gScore = (currentNode as AStarNode).g + distance;
 				const hScore = this.Timedheuristic(neighbor, this.end);
-				const fScore = gScore + hScore * 1.3;
+				const fScore = gScore + hScore * 1.1;
 
 				const neighborNode = new AStarNode(neighbor, currentNode, gScore, hScore);
 
